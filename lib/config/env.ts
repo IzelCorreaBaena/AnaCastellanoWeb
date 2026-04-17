@@ -21,6 +21,10 @@ const schema = z.object({
   GOOGLE_PRIVATE_KEY: z.string().optional(),
   GOOGLE_CALENDAR_ID: z.string().optional(),
   ADMIN_EMAIL: z.string().email().optional(),
+  // Cloudinary — required for image uploads in production
+  CLOUDINARY_CLOUD_NAME: z.string().optional(),
+  CLOUDINARY_API_KEY: z.string().optional(),
+  CLOUDINARY_API_SECRET: z.string().optional(),
 });
 
 const parsed = schema.safeParse(process.env);
