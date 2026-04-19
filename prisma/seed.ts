@@ -290,6 +290,7 @@ async function main() {
 
   const reservasEjemplo = [
     {
+      id: "00000000-0000-0000-0001-000000000001",
       nombre: "Laura Martínez García",
       telefono: "+34 612 345 678",
       email: "laura.martinez@email.com",
@@ -301,6 +302,7 @@ async function main() {
       servicioNombre: "Diseño floral personalizado",
     },
     {
+      id: "00000000-0000-0000-0001-000000000002",
       nombre: "Carlos Rodríguez Sanz",
       telefono: "+34 698 765 432",
       email: "carlos.rodriguez@empresa.es",
@@ -315,6 +317,7 @@ async function main() {
       servicioNombre: "Decoración integral de eventos",
     },
     {
+      id: "00000000-0000-0000-0001-000000000003",
       nombre: "Marta López Fernández",
       telefono: "+34 654 321 987",
       email: "marta.lopez@gmail.com",
@@ -327,6 +330,7 @@ async function main() {
       servicioNombre: "Asesoramiento estético 360°",
     },
     {
+      id: "00000000-0000-0000-0001-000000000004",
       nombre: "Isabel Ruiz Moreno",
       telefono: "+34 677 890 123",
       email: "isabel.ruiz@hotmail.com",
@@ -340,7 +344,11 @@ async function main() {
   ];
 
   for (const reservaData of reservasEjemplo) {
-    const reserva = await prisma.reserva.create({ data: reservaData });
+    const reserva = await prisma.reserva.upsert({
+      where: { id: reservaData.id },
+      update: {},
+      create: reservaData,
+    });
     console.log(
       `  Reserva creada: ${reserva.nombre} — Estado: ${reserva.estado}`
     );
