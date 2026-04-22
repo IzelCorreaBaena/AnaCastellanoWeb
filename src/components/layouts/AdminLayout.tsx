@@ -26,6 +26,7 @@ export default function AdminLayout() {
         <nav className="space-y-2">
           <Link to="/admin/dashboard" className="block py-2 px-3 rounded hover:bg-primary-50">Dashboard</Link>
           <Link to="/admin/services" className="block py-2 px-3 rounded hover:bg-primary-50">Servicios</Link>
+          <Link to="/admin/cursos" className="block py-2 px-3 rounded hover:bg-primary-50">Cursos</Link>
           <Link to="/admin/reservations" className="block py-2 px-3 rounded hover:bg-primary-50">Reservas</Link>
           <Link to="/admin/presupuestos" className="block py-2 px-3 rounded hover:bg-primary-50">Presupuestos</Link>
         </nav>

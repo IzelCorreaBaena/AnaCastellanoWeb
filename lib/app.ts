@@ -19,6 +19,7 @@ import uploadsRoutes from './routes/uploads.routes';
 import contactoRoutes from './routes/contacto.routes';
 import presupuestosRoutes from './routes/presupuestos.routes';
 import notificationsRoutes from './routes/notifications.routes';
+import cursosRoutes from './routes/cursos.routes';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -105,6 +106,7 @@ app.use('/api/uploads', uploadsRoutes);
 app.use('/api/contacto', contactoRoutes);
 app.use('/api/presupuestos', presupuestosRoutes);
 app.use('/api/notifications', notificationsRoutes);
+app.use('/api/cursos', cursosRoutes);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

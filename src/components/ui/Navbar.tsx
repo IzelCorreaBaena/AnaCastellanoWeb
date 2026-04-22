@@ -10,6 +10,7 @@ const DEFAULT_LINKS: NavLinkItem[] = [
   { to: '/', label: 'Inicio' },
   { to: '/about', label: 'Sobre Mí' },
   { to: '/services', label: 'Servicios' },
+  { to: '/cursos', label: 'Cursos' },
   { to: '/contact', label: 'Contacto' },
 ];
 
@@ -43,7 +44,17 @@ export default function Navbar({
     setOpen(false);
   }, [location.pathname]);
 
-  const solid = forceSolid || scrolled;
+  // Bloquear scroll del body cuando el drawer móvil está abierto.
+  // Esto evita que, al desplazarse con el menú abierto, el header cambie
+  // de estado (transparente/sólido) y aparezcan glitches por el backdrop-filter.
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : '';
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [open]);
+
+  const solid = forceSolid || scrolled || open;
 
   return (
     <header className={`nav ${solid ? 'nav-solid' : 'nav-transparent'}`}>

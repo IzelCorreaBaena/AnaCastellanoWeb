@@ -69,19 +69,37 @@ function formatFecha(fecha: Date | null | undefined): string {
 
 // ─── Transporter (singleton) ──────────────────────────────────────────────────
 let transporter: Transporter | null = null;
+// Tracks whether getTransporter has already attempted initialisation so we only
+// emit the "not configured" warning once per process lifetime.
+let transporterInitialised = false;
 
-function getTransporter(): Transporter | null {
+async function getTransporter(): Promise<Transporter | null> {
   if (transporter) return transporter;
+  if (transporterInitialised) return null; // already tried and found null
+  transporterInitialised = true;
+
   if (!env.SMTP_HOST || !env.SMTP_PORT) {
-    console.warn('[email] SMTP not configured — emails will be logged only');
+    console.warn('[email] SMTP not configured — email skipped');
     return null;
   }
-  transporter = nodemailer.createTransport({
+
+  const t = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     secure: env.SMTP_PORT === 465,
     auth: env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : undefined,
   });
+
+  // Verify the connection eagerly so misconfigurations are surfaced at startup
+  // rather than silently at send time.
+  try {
+    await t.verify();
+    console.log('[email] SMTP connection verified OK');
+  } catch (err) {
+    console.error('[email] SMTP connection FAILED:', (err as Error).message);
+  }
+
+  transporter = t;
   return transporter;
 }
 
@@ -99,13 +117,12 @@ interface ReservaEmailPayload {
 
 export const emailService = {
   async send(to: string, subject: string, html: string): Promise<void> {
-    const t = getTransporter();
-    const from = env.SMTP_FROM || 'no-reply@anacastellano.com';
+    const t = await getTransporter();
     if (!t) {
-      console.log(`[email:mock] to=${to} subject=${subject}`);
+      console.warn('[email] SMTP not configured — skipping email send');
       return;
     }
-    await t.sendMail({ from, to, subject, html });
+    await t.sendMail({ from: env.SMTP_FROM, to, subject, html });
   },
 
   /** Sent immediately after the client submits a reservation request. */

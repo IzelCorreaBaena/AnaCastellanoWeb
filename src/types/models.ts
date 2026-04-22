@@ -24,6 +24,20 @@ export interface Servicio {
   readonly updatedAt: string;
 }
 
+export interface Curso {
+  readonly id: string;
+  readonly titulo: string;
+  readonly descripcion: string;
+  readonly imagen?: string | null;
+  readonly precio?: number | null;
+  readonly duracion?: string | null;
+  readonly modalidad?: string | null;
+  readonly orden: number;
+  readonly activo: boolean;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 export type EstadoReserva = 'PENDIENTE' | 'ACEPTADA' | 'RECHAZADA';
 
 export interface Reserva {
@@ -63,6 +77,28 @@ export interface UpdateServicioPayload {
   titulo?: string;
   descripcion?: string;
   imagen?: string | null;
+  orden?: number;
+  activo?: boolean;
+}
+
+export interface CreateCursoPayload {
+  titulo: string;
+  descripcion: string;
+  imagen?: string | null;
+  precio?: number | null;
+  duracion?: string | null;
+  modalidad?: string | null;
+  orden?: number;
+  activo?: boolean;
+}
+
+export interface UpdateCursoPayload {
+  titulo?: string;
+  descripcion?: string;
+  imagen?: string | null;
+  precio?: number | null;
+  duracion?: string | null;
+  modalidad?: string | null;
   orden?: number;
   activo?: boolean;
 }
@@ -187,3 +223,4 @@ export interface NotificationsSummary {
   unreadMessages: number;
   total: number;
 }
+

@@ -46,3 +46,21 @@ export const authenticate: RequestHandler = (req, _res, next) => {
 
 /** Alias kept for semantic clarity in protected routes */
 export const requireAdmin = authenticate;
+
+/**
+ * Soft authentication: populates `req.admin` when a valid Bearer token is
+ * present, but does NOT reject the request if the token is missing or invalid.
+ * Use on routes that serve both public and admin callers (e.g. list endpoints
+ * that filter by `activo` for public callers but show all records for admins).
+ */
+export const softAuthenticate: RequestHandler = (req, _res, next) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith('Bearer ')) return next();
+  try {
+    const payload = jwt.verify(header.slice(7), env.JWT_SECRET) as AuthTokenPayload;
+    req.admin = payload;
+  } catch {
+    // Invalid or expired token — treat as unauthenticated, not an error
+  }
+  return next();
+};
