@@ -2,16 +2,11 @@ import { v2 as cloudinary } from 'cloudinary';
 import { RequestHandler } from 'express';
 import multer, { FileFilterCallback } from 'multer';
 import { AppError } from '../middleware/errorHandler';
-import { env } from '../config/env';
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
 
-cloudinary.config({
-  cloud_name: env.CLOUDINARY_CLOUD_NAME,
-  api_key: env.CLOUDINARY_API_KEY,
-  api_secret: env.CLOUDINARY_API_SECRET,
-});
+// Cloudinary reads CLOUDINARY_URL from the environment automatically.
 
 const fileFilter = (
   _req: Express.Request,

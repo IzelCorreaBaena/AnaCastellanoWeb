@@ -30,11 +30,8 @@ var schema = z.object({
   GOOGLE_CLIENT_EMAIL: z.string().email().optional(),
   GOOGLE_PRIVATE_KEY: z.string().optional(),
   GOOGLE_CALENDAR_ID: z.string().optional(),
-  ADMIN_EMAIL: z.string().email().optional(),
-  // Cloudinary — required for image uploads in production
-  CLOUDINARY_CLOUD_NAME: z.string().optional(),
-  CLOUDINARY_API_KEY: z.string().optional(),
-  CLOUDINARY_API_SECRET: z.string().optional()
+  ADMIN_EMAIL: z.string().email().optional()
+  // CLOUDINARY_URL is read directly by the Cloudinary SDK — no validation needed here.
 });
 var parsed = schema.safeParse(process.env);
 if (!parsed.success) {
@@ -918,11 +915,6 @@ import { v2 as cloudinary } from "cloudinary";
 import multer2 from "multer";
 var ALLOWED_MIME_TYPES = /* @__PURE__ */ new Set(["image/jpeg", "image/png", "image/webp"]);
 var MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
-cloudinary.config({
-  cloud_name: env.CLOUDINARY_CLOUD_NAME,
-  api_key: env.CLOUDINARY_API_KEY,
-  api_secret: env.CLOUDINARY_API_SECRET
-});
 var fileFilter = (_req, file, cb) => {
   if (ALLOWED_MIME_TYPES.has(file.mimetype)) {
     cb(null, true);
