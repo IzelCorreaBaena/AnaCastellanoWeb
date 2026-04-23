@@ -36,7 +36,11 @@ export const uploadImage: RequestHandler = async (req, res, next) => {
       const stream = cloudinary.uploader.upload_stream(
         { folder: 'anacastellano', resource_type: 'image' },
         (error, result) => {
-          if (error || !result) return reject(error ?? new Error('Cloudinary upload failed'));
+          if (error || !result) {
+            const msg = error?.message ?? 'No result returned';
+            console.error('[cloudinary] upload failed:', msg);
+            return reject(new AppError(`Error al subir la imagen a Cloudinary: ${msg}`, 502, 'CLOUDINARY_ERROR'));
+          }
           resolve(result);
         },
       );
