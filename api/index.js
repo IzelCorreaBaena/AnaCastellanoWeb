@@ -187,7 +187,7 @@ var authController = {
         throw new AppError("Credenciales inv\xE1lidas", 401, "INVALID_CREDENTIALS");
       }
       const token = jwt.sign({ sub: admin.id }, env.JWT_SECRET, {
-        expiresIn: env.JWT_EXPIRES_IN
+        expiresIn: "7d"
       });
       res.json({
         token,
@@ -230,6 +230,16 @@ var authenticate = (req, _res, next) => {
     }
     return next(new AppError("Token inv\xE1lido", 401, "INVALID_TOKEN"));
   }
+};
+var softAuthenticate = (req, _res, next) => {
+  const header = req.headers.authorization;
+  if (!header?.startsWith("Bearer ")) return next();
+  try {
+    const payload = jwt2.verify(header.slice(7), env.JWT_SECRET);
+    req.admin = payload;
+  } catch {
+  }
+  return next();
 };
 
 // lib/routes/auth.routes.ts
@@ -471,29 +481,38 @@ function formatFecha(fecha) {
   return fecha.toLocaleDateString("es-ES", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
 }
 var transporter = null;
-function getTransporter() {
+var transporterInitialised = false;
+async function getTransporter() {
   if (transporter) return transporter;
+  if (transporterInitialised) return null;
+  transporterInitialised = true;
   if (!env.SMTP_HOST || !env.SMTP_PORT) {
-    console.warn("[email] SMTP not configured \u2014 emails will be logged only");
+    console.warn("[email] SMTP not configured \u2014 email skipped");
     return null;
   }
-  transporter = nodemailer.createTransport({
+  const t = nodemailer.createTransport({
     host: env.SMTP_HOST,
     port: env.SMTP_PORT,
     secure: env.SMTP_PORT === 465,
     auth: env.SMTP_USER && env.SMTP_PASS ? { user: env.SMTP_USER, pass: env.SMTP_PASS } : void 0
   });
+  try {
+    await t.verify();
+    console.log("[email] SMTP connection verified OK");
+  } catch (err) {
+    console.error("[email] SMTP connection FAILED:", err.message);
+  }
+  transporter = t;
   return transporter;
 }
 var emailService = {
   async send(to, subject, html) {
-    const t = getTransporter();
-    const from = env.SMTP_FROM || "no-reply@anacastellano.com";
+    const t = await getTransporter();
     if (!t) {
-      console.log(`[email:mock] to=${to} subject=${subject}`);
+      console.warn("[email] SMTP not configured \u2014 skipping email send");
       return;
     }
-    await t.sendMail({ from, to, subject, html });
+    await t.sendMail({ from: env.SMTP_FROM, to, subject, html });
   },
   /** Sent immediately after the client submits a reservation request. */
   async sendReservationConfirmation(reserva) {
@@ -1186,6 +1205,94 @@ var router9 = Router9();
 router9.get("/", authenticate, notificationsController.summary);
 var notifications_routes_default = router9;
 
+// lib/routes/cursos.routes.ts
+import { Router as Router10 } from "express";
+
+// lib/controllers/cursos.controller.ts
+import { z as z9 } from "zod";
+import { Prisma as Prisma2 } from "@prisma/client";
+var serializeCurso = (c) => ({
+  ...c,
+  precio: c.precio instanceof Prisma2.Decimal ? c.precio.toNumber() : c.precio
+});
+var listQuerySchema3 = z9.object({
+  all: z9.coerce.boolean().optional()
+});
+var cursoSchema = z9.object({
+  titulo: z9.string().trim().min(1).max(150),
+  descripcion: z9.string().trim().max(5e3).optional().default(""),
+  imagen: z9.string().url().max(500).optional().nullable(),
+  precio: z9.number().nonnegative().optional().nullable(),
+  duracion: z9.string().trim().max(100).optional().nullable(),
+  modalidad: z9.string().trim().max(100).optional().nullable(),
+  orden: z9.number().int().min(0).max(1e4).optional(),
+  activo: z9.boolean().optional()
+});
+var idParamSchema5 = z9.object({ id: z9.string().uuid() });
+var cursosController = {
+  list: async (req, res, next) => {
+    try {
+      const { all } = listQuerySchema3.parse(req.query);
+      const isAdmin = Boolean(req.admin);
+      const showAll = all === true && isAdmin;
+      const cursos = await prisma.curso.findMany({
+        where: showAll ? void 0 : { activo: true },
+        orderBy: { orden: "asc" }
+      });
+      res.json(cursos.map(serializeCurso));
+    } catch (e) {
+      next(e);
+    }
+  },
+  get: async (req, res, next) => {
+    try {
+      const { id } = idParamSchema5.parse(req.params);
+      const curso = await prisma.curso.findUnique({ where: { id } });
+      if (!curso) throw new AppError("Curso no encontrado", 404);
+      res.json(serializeCurso(curso));
+    } catch (e) {
+      next(e);
+    }
+  },
+  create: async (req, res, next) => {
+    try {
+      const data2 = cursoSchema.parse(req.body);
+      const curso = await prisma.curso.create({ data: data2 });
+      res.status(201).json(serializeCurso(curso));
+    } catch (e) {
+      next(e);
+    }
+  },
+  update: async (req, res, next) => {
+    try {
+      const { id } = idParamSchema5.parse(req.params);
+      const data2 = cursoSchema.partial().parse(req.body);
+      const curso = await prisma.curso.update({ where: { id }, data: data2 });
+      res.json(serializeCurso(curso));
+    } catch (e) {
+      next(e);
+    }
+  },
+  remove: async (req, res, next) => {
+    try {
+      const { id } = idParamSchema5.parse(req.params);
+      await prisma.curso.delete({ where: { id } });
+      res.status(204).send();
+    } catch (e) {
+      next(e);
+    }
+  }
+};
+
+// lib/routes/cursos.routes.ts
+var router10 = Router10();
+router10.get("/", softAuthenticate, cursosController.list);
+router10.get("/:id", cursosController.get);
+router10.post("/", authenticate, cursosController.create);
+router10.put("/:id", authenticate, cursosController.update);
+router10.delete("/:id", authenticate, cursosController.remove);
+var cursos_routes_default = router10;
+
 // lib/app.ts
 var __filename = fileURLToPath(import.meta.url);
 var __dirname = path.dirname(__filename);
@@ -1259,6 +1366,7 @@ app.use("/api/uploads", uploads_routes_default);
 app.use("/api/contacto", contacto_routes_default);
 app.use("/api/presupuestos", presupuestos_routes_default);
 app.use("/api/notifications", notifications_routes_default);
+app.use("/api/cursos", cursos_routes_default);
 app.use(notFoundHandler);
 app.use(errorHandler);
 var app_default = app;
