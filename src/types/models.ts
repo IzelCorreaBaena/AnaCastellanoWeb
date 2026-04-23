@@ -29,6 +29,7 @@ export interface Curso {
   readonly titulo: string;
   readonly descripcion: string;
   readonly imagen?: string | null;
+  readonly imagenes?: string[] | null;
   readonly precio?: number | null;
   readonly duracion?: string | null;
   readonly modalidad?: string | null;
@@ -85,6 +86,7 @@ export interface CreateCursoPayload {
   titulo: string;
   descripcion: string;
   imagen?: string | null;
+  imagenes?: string[] | null;
   precio?: number | null;
   duracion?: string | null;
   modalidad?: string | null;
@@ -96,6 +98,7 @@ export interface UpdateCursoPayload {
   titulo?: string;
   descripcion?: string;
   imagen?: string | null;
+  imagenes?: string[] | null;
   precio?: number | null;
   duracion?: string | null;
   modalidad?: string | null;

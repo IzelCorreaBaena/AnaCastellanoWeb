@@ -5,6 +5,7 @@ import type { Servicio } from '@app-types/models';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
+import ImageUploader from '../../components/ui/ImageUploader';
 
 type ModalMode = 'createService' | 'editService' | 'manageBlocks' | null;
 
@@ -400,30 +401,49 @@ export default function AdminServices() {
             ) : (
               <ul className="space-y-2">
                 {selected.bloques.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between p-3 bg-ivory-50 rounded text-sm">
-                    <div>
-                      <span className="font-medium text-charcoal-700">{b.titulo}</span>
-                      {b.descripcion && <span className="text-charcoal-400 ml-2">— {b.descripcion}</span>}
+                  <li key={b.id} className="p-3 bg-ivory-50 rounded text-sm space-y-2">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <span className="font-medium text-charcoal-700">{b.titulo}</span>
+                        {b.descripcion && <span className="text-charcoal-400 ml-2">— {b.descripcion}</span>}
+                      </div>
+                      <button
+                        onClick={async () => {
+                          const currentSelected = selected;
+                          if (!currentSelected) return;
+                          if (!window.confirm(`¿Eliminar bloque "${b.titulo}"?`)) return;
+                          try {
+                            await blocksApi.remove(b.id);
+                            success('Bloque eliminado');
+                            const updated = await servicesApi.get(currentSelected.id);
+                            setSelected(updated);
+                            fetchServices();
+                          } catch {
+                            toastError('Error al eliminar el bloque');
+                          }
+                        }}
+                        className="text-xs text-red-400 hover:text-red-600 transition-colors font-sans flex-shrink-0"
+                      >
+                        ✕
+                      </button>
                     </div>
-                    <button
-                      onClick={async () => {
-                        const currentSelected = selected;
-                        if (!currentSelected) return;
-                        if (!window.confirm(`¿Eliminar bloque "${b.titulo}"?`)) return;
-                        try {
-                          await blocksApi.remove(b.id);
-                          success('Bloque eliminado');
-                          const updated = await servicesApi.get(currentSelected.id);
-                          setSelected(updated);
-                          fetchServices();
-                        } catch {
-                          toastError('Error al eliminar el bloque');
-                        }
-                      }}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors font-sans"
-                    >
-                      ✕
-                    </button>
+                    <div>
+                      <p className="text-xs text-charcoal-400 font-sans mb-1">Imágenes del bloque</p>
+                      <ImageUploader
+                        images={b.imagenes ?? []}
+                        uploadFn={servicesApi.uploadImage}
+                        onChange={async (newImages) => {
+                          try {
+                            await blocksApi.update(b.id, { imagenes: newImages });
+                            const updated = await servicesApi.get(selected!.id);
+                            setSelected(updated);
+                            fetchServices();
+                          } catch {
+                            toastError('Error al actualizar imágenes del bloque');
+                          }
+                        }}
+                      />
+                    </div>
                   </li>
                 ))}
               </ul>

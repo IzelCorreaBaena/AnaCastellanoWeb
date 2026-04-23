@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { cursosApi } from '@services/cursos.api';
 import type { Curso } from '@app-types/models';
 import SectionHeader from '../components/ui/SectionHeader';
+import CursoDetailModal from '../components/ui/CursoDetailModal';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -49,13 +50,20 @@ function CursoCardSkeleton() {
 
 interface CursoCardProps {
   curso: Curso;
+  onClick: () => void;
 }
 
-function CursoCard({ curso }: CursoCardProps) {
+function CursoCard({ curso, onClick }: CursoCardProps) {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <article className="card-curso">
+    <article
+      className="card-curso cursor-pointer hover:shadow-md transition-shadow"
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === 'Enter' && onClick()}
+    >
       {/* Image — 4:3 aspect ratio with graceful fallback */}
       <div className="card-curso__image">
         {curso.imagen && !imgError ? (
@@ -166,6 +174,7 @@ function CursoCard({ curso }: CursoCardProps) {
         <Link
           to="/contact"
           className="card-curso__cta btn btn-secondary"
+          onClick={(e) => e.stopPropagation()}
           aria-label={`Solicitar información sobre ${curso.titulo}`}
         >
           Solicitar información
@@ -213,6 +222,7 @@ export default function Cursos() {
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
+  const [selected, setCurso] = useState<Curso | null>(null);
 
   useEffect(() => {
     cursosApi
@@ -337,7 +347,7 @@ export default function Cursos() {
           {!loading && cursos.length > 0 && (
             <div className="cursos-grid mt-16">
               {cursos.map((curso) => (
-                <CursoCard key={curso.id} curso={curso} />
+                <CursoCard key={curso.id} curso={curso} onClick={() => setCurso(curso)} />
               ))}
             </div>
           )}
@@ -370,6 +380,7 @@ export default function Cursos() {
           </div>
         </div>
       </section>
+      <CursoDetailModal curso={selected} onClose={() => setCurso(null)} />
     </main>
   );
 }

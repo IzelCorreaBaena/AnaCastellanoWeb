@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cursosApi } from '@services/cursos.api';
 import type { Curso } from '@app-types/models';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
+import ImageUploader from '../../components/ui/ImageUploader';
 
 type ModalMode = 'createCurso' | 'editCurso' | null;
 
@@ -27,6 +28,7 @@ interface CursoForm {
   titulo: string;
   descripcion: string;
   imagen: string;
+  imagenes: string[];
   precio: string; // kept as string for input control; coerced on save
   duracion: string;
   modalidad: string;
@@ -38,6 +40,7 @@ const EMPTY_FORM: CursoForm = {
   titulo: '',
   descripcion: '',
   imagen: '',
+  imagenes: [],
   precio: '',
   duracion: '',
   modalidad: '',
@@ -59,10 +62,8 @@ export default function AdminCursos() {
   const [modal, setModal] = useState<ModalMode>(null);
   const [selected, setSelected] = useState<Curso | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
-  const [uploading, setUploading] = useState<boolean>(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [form, setForm] = useState<CursoForm>(EMPTY_FORM);
 
@@ -95,6 +96,7 @@ export default function AdminCursos() {
       titulo: c.titulo,
       descripcion: c.descripcion,
       imagen: c.imagen ?? '',
+      imagenes: c.imagenes?.filter(Boolean) ?? (c.imagen ? [c.imagen] : []),
       precio: c.precio != null ? String(c.precio) : '',
       duracion: c.duracion ?? '',
       modalidad: c.modalidad ?? '',
@@ -122,25 +124,6 @@ export default function AdminCursos() {
     return out;
   };
 
-  const handleFileUpload = async (
-    e: React.ChangeEvent<HTMLInputElement>,
-  ): Promise<void> => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    try {
-      const { url } = await cursosApi.uploadImage(file);
-      setForm((prev) => ({ ...prev, imagen: url }));
-      setFieldErrors((prev) => ({ ...prev, imagen: undefined }));
-      success('Imagen subida correctamente');
-    } catch {
-      toastError('Error al subir la imagen');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
   const saveCurso = async (): Promise<void> => {
     if (!form.titulo.trim()) return;
     setSaving(true);
@@ -161,7 +144,8 @@ export default function AdminCursos() {
     const payload = {
       titulo: form.titulo,
       descripcion: form.descripcion,
-      imagen: form.imagen.trim() || null,
+      imagen: form.imagenes[0] ?? (form.imagen.trim() || null),
+      imagenes: form.imagenes.length > 0 ? form.imagenes : undefined,
       precio: precioValue,
       duracion: form.duracion.trim() || null,
       modalidad: form.modalidad.trim() || null,
@@ -206,11 +190,6 @@ export default function AdminCursos() {
     } catch {
       toastError('No se puede eliminar el curso.');
     }
-  };
-
-  const isValidImageUrl = (url: string): boolean => {
-    const trimmed = url.trim();
-    return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
   };
 
   return (
@@ -368,52 +347,15 @@ export default function AdminCursos() {
           </div>
 
           <div>
-            <label className="form-label">Imagen (opcional)</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileUpload}
-              disabled={uploading}
-              className="block w-full text-sm text-charcoal-600 font-sans file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-ivory-200 file:text-xs file:bg-ivory-50 file:text-charcoal-700 hover:file:bg-ivory-100"
+            <label className="form-label">Imágenes</label>
+            <ImageUploader
+              images={form.imagenes}
+              onChange={(newImages) => setForm({ ...form, imagenes: newImages })}
+              uploadFn={cursosApi.uploadImage}
             />
-            {uploading && (
-              <div className="flex items-center gap-2 mt-2 text-xs text-charcoal-500 font-sans">
-                <LoadingSpinner size="sm" /> Subiendo imagen...
-              </div>
-            )}
-            <div className="mt-3">
-              <label className="form-label text-xs">O introduce una URL</label>
-              <input
-                className="input-field"
-                value={form.imagen}
-                onChange={(e) => setForm({ ...form, imagen: e.target.value })}
-                placeholder="https://..."
-              />
-              <p className="text-xs text-charcoal-400 mt-1 font-sans">
-                Solo URLs https válidas (máx. 500 caracteres)
-              </p>
-              {fieldErrors.imagen && (
-                <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.imagen}</p>
-              )}
-            </div>
-            {isValidImageUrl(form.imagen) && (
-              <div className="mt-3">
-                <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">
-                  Vista previa
-                </p>
-                <div className="w-32 aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
-                  <img
-                    src={form.imagen.startsWith('http') ? form.imagen : `http://localhost:4000${form.imagen}`}
-                    alt="Vista previa"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-            )}
+            <p className="text-xs text-charcoal-400 mt-1 font-sans">
+              La primera imagen será la imagen principal del curso.
+            </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">

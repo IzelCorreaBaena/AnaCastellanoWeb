@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { servicesApi } from '@services/services.api';
 import type { Servicio } from '@app-types/models';
+import ServiceDetailModal from '../components/ui/ServiceDetailModal';
 import SectionHeader from '../components/ui/SectionHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
 
@@ -50,6 +51,7 @@ export default function Services() {
   const [services, setServices] = useState<Servicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+  const [selected, setSelected] = useState<Servicio | null>(null);
 
   useEffect(() => {
     servicesApi.list()
@@ -96,7 +98,15 @@ export default function Services() {
           ) : (
             <div className="mt-16 space-y-24">
               {services.map((servicio, idx) => (
-                <div key={servicio.id} className={`grid lg:grid-cols-2 gap-12 items-start ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}>
+                <div
+                  key={servicio.id}
+                  className={`grid lg:grid-cols-2 gap-12 items-start cursor-pointer group hover:opacity-95 transition-opacity ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}
+                  onClick={() => setSelected(servicio)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelected(servicio)}
+                  aria-label={`Ver detalle de ${servicio.titulo}`}
+                >
                   {/* Imagen/visual */}
                   <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
                     
@@ -147,12 +157,12 @@ export default function Services() {
                       </ul>
                     )}
 
-                    <Link
-                      to={`/reservations?service=${servicio.id}`}
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelected(servicio); }}
                       className="btn-primary inline-block"
                     >
-                      Solicitar este servicio
-                    </Link>
+                      Ver detalle
+                    </button>
                   </div>
                 </div>
               ))}
@@ -175,6 +185,8 @@ export default function Services() {
           </Link>
         </div>
       </section>
+
+      <ServiceDetailModal servicio={selected} onClose={() => setSelected(null)} />
     </main>
   );
 }
