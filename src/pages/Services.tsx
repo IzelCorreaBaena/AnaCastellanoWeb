@@ -8,6 +8,13 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
 
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
+  : 'http://localhost:4000';
+
+const resolveImageSrc = (src: string): string =>
+  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
+
 const fallbackServices: Servicio[] = [
   {
     id: '1', orden: 1, activo: true, createdAt: FALLBACK_DATE, updatedAt: FALLBACK_DATE,
@@ -113,7 +120,7 @@ export default function Services() {
                     {/* Si HAY imagen, muestra la foto */}
                     {servicio.imagen && (
                       <img
-                        src={servicio.imagen?.startsWith('http') ? servicio.imagen : `http://localhost:4000${servicio.imagen}`}
+                        src={resolveImageSrc(servicio.imagen)}
                         alt={servicio.titulo}
                         className="absolute inset-0 w-full h-full object-cover z-10"
                         onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}

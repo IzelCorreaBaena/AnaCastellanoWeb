@@ -328,11 +328,9 @@ export default function Cursos() {
             centered
           />
 
-          {/* Loading skeletons — 6 cards matching the 3-column desktop grid */}
+          {/* Loading skeletons — 4 cards matching the 2-column desktop grid */}
           {loading && (
             <div className="cursos-grid mt-16" aria-busy="true" aria-label="Cargando cursos">
-              <CursoCardSkeleton />
-              <CursoCardSkeleton />
               <CursoCardSkeleton />
               <CursoCardSkeleton />
               <CursoCardSkeleton />
