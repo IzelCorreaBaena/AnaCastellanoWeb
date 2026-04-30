@@ -10,7 +10,8 @@ const listQuerySchema = z.object({
 const servicioSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
   descripcion: z.string().trim().max(5000).optional().default(''),
-  imagen: z.string().max(500).optional().nullable(),
+  imagenes: z.array(z.string().min(1)).optional().default([]),
+  videos: z.array(z.string().min(1)).optional().default([]),
   orden: z.number().int().min(0).max(10_000).optional(),
   activo: z.boolean().optional(),
 });
@@ -21,8 +22,6 @@ export const servicesController = {
   list: (async (req, res, next) => {
     try {
       const { all } = listQuerySchema.parse(req.query);
-      // Skip the activo filter only when the caller is authenticated AND
-      // explicitly requests all records. Public callers always see active only.
       const isAdmin = Boolean(req.admin);
       const showAll = all === true && isAdmin;
 

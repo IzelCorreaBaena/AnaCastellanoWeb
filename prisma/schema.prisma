@@ -40,7 +40,8 @@ model Servicio {
   id          String   @id @default(uuid()) @db.Uuid
   titulo      String   @db.VarChar(150)
   descripcion String   @db.Text
-  imagen      String?  @db.VarChar(500)
+  imagenes    String[] // Array de URLs de imágenes (Cloudinary)
+  videos      String[] // Array de URLs de vídeos (Cloudinary)
   orden       Int      @default(0)
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()
@@ -66,7 +67,8 @@ model Bloque {
   id          String   @id @default(uuid()) @db.Uuid
   titulo      String   @db.VarChar(150)
   descripcion String   @db.Text
-  imagenes    String[] // Array de URLs — almacenado como TEXT[] en PostgreSQL
+  imagenes    String[] // Array de URLs de imágenes — almacenado como TEXT[] en PostgreSQL
+  videos      String[] // Array de URLs de vídeos — almacenado como TEXT[] en PostgreSQL
   orden       Int      @default(0)
   activo      Boolean  @default(true)
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz()

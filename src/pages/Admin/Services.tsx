@@ -16,13 +16,265 @@ interface ZodIssue {
 interface FieldErrors {
   titulo?: string;
   descripcion?: string;
-  imagen?: string;
+  imagenes?: string;
+  videos?: string;
   orden?: string;
   activo?: string;
 }
 
 const MAX_TITULO = 150;
 const MAX_DESCRIPCION = 5000;
+
+// ─── Media gallery component ──────────────────────────────────────────────────
+
+interface MediaGalleryProps {
+  imagenes: string[];
+  videos: string[];
+  onRemoveImage: (idx: number) => void;
+  onRemoveVideo: (idx: number) => void;
+  onAddImages: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddVideos: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploading: boolean;
+  uploadingVideo: boolean;
+}
+
+function MediaGallery({
+  imagenes,
+  videos,
+  onRemoveImage,
+  onRemoveVideo,
+  onAddImages,
+  onAddVideos,
+  uploading,
+  uploadingVideo,
+}: MediaGalleryProps) {
+  const imgInputRef = useRef<HTMLInputElement | null>(null);
+  const vidInputRef = useRef<HTMLInputElement | null>(null);
+
+  return (
+    <div className="space-y-4">
+      {/* Grid de imágenes */}
+      {imagenes.length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          {imagenes.map((url, idx) => (
+            <div key={idx} className="relative group aspect-[4/3] overflow-hidden rounded bg-ivory-100 border border-ivory-200">
+              <img
+                src={url}
+                alt={`Imagen ${idx + 1}`}
+                className="w-full h-full object-cover"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+              />
+              <button
+                type="button"
+                onClick={() => onRemoveImage(idx)}
+                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Eliminar imagen"
+              >
+                ✕
+              </button>
+              <span className="absolute bottom-1 left-1 text-[10px] bg-black/50 text-white px-1 rounded font-sans">
+                IMG
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Grid de vídeos */}
+      {videos.length > 0 && (
+        <div className="grid grid-cols-2 gap-2">
+          {videos.map((url, idx) => (
+            <div key={idx} className="relative group aspect-video overflow-hidden rounded bg-charcoal-900 border border-ivory-200">
+              <video
+                src={url}
+                className="w-full h-full object-cover"
+                muted
+                playsInline
+                preload="metadata"
+              />
+              <button
+                type="button"
+                onClick={() => onRemoveVideo(idx)}
+                className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                aria-label="Eliminar vídeo"
+              >
+                ✕
+              </button>
+              <span className="absolute bottom-1 left-1 text-[10px] bg-black/50 text-white px-1 rounded font-sans">
+                VÍD
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Botones de subida */}
+      <div className="flex flex-wrap gap-2">
+        <div>
+          <input
+            ref={imgInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={onAddImages}
+            disabled={uploading}
+            className="hidden"
+            id="img-upload"
+          />
+          <label
+            htmlFor="img-upload"
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded border font-sans cursor-pointer transition-colors ${
+              uploading
+                ? 'border-ivory-200 text-charcoal-300 bg-ivory-50 cursor-not-allowed'
+                : 'border-sage-300 text-sage-700 bg-sage-50 hover:bg-sage-100'
+            }`}
+          >
+            {uploading ? (
+              <><LoadingSpinner size="sm" /> Subiendo...</>
+            ) : (
+              <>📷 Añadir imágenes</>
+            )}
+          </label>
+        </div>
+
+        <div>
+          <input
+            ref={vidInputRef}
+            type="file"
+            accept="video/mp4,video/webm,video/ogg,video/quicktime"
+            multiple
+            onChange={onAddVideos}
+            disabled={uploadingVideo}
+            className="hidden"
+            id="vid-upload"
+          />
+          <label
+            htmlFor="vid-upload"
+            className={`inline-flex items-center gap-1.5 text-xs px-3 py-2 rounded border font-sans cursor-pointer transition-colors ${
+              uploadingVideo
+                ? 'border-ivory-200 text-charcoal-300 bg-ivory-50 cursor-not-allowed'
+                : 'border-blush-300 text-blush-700 bg-blush-50 hover:bg-blush-100'
+            }`}
+          >
+            {uploadingVideo ? (
+              <><LoadingSpinner size="sm" /> Subiendo...</>
+            ) : (
+              <>🎬 Añadir vídeos</>
+            )}
+          </label>
+        </div>
+      </div>
+
+      <p className="text-[11px] text-charcoal-400 font-sans">
+        Imágenes: JPEG, PNG, WebP (máx. 10 MB c/u) · Vídeos: MP4, WebM, MOV (máx. 100 MB c/u)
+      </p>
+    </div>
+  );
+}
+
+// ─── Block media gallery (inline, simpler) ────────────────────────────────────
+
+interface BlockMediaProps {
+  imagenes: string[];
+  videos: string[];
+  onRemoveImage: (idx: number) => void;
+  onRemoveVideo: (idx: number) => void;
+  onAddImages: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onAddVideos: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  uploading: boolean;
+  uploadingVideo: boolean;
+}
+
+function BlockMedia({
+  imagenes,
+  videos,
+  onRemoveImage,
+  onRemoveVideo,
+  onAddImages,
+  onAddVideos,
+  uploading,
+  uploadingVideo,
+}: BlockMediaProps) {
+  return (
+    <div className="space-y-2">
+      <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans">
+        Media del bloque
+      </p>
+
+      {(imagenes.length > 0 || videos.length > 0) && (
+        <div className="flex flex-wrap gap-2">
+          {imagenes.map((url, idx) => (
+            <div key={`img-${idx}`} className="relative group w-16 aspect-square overflow-hidden rounded bg-ivory-100 border border-ivory-200">
+              <img src={url} alt="" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => onRemoveImage(idx)}
+                className="absolute inset-0 bg-red-500/70 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+          {videos.map((_url, idx) => (
+            <div key={`vid-${idx}`} className="relative group w-16 aspect-square overflow-hidden rounded bg-charcoal-800 border border-ivory-200 flex items-center justify-center">
+              <span className="text-white text-xs font-sans">🎬</span>
+              <button
+                type="button"
+                onClick={() => onRemoveVideo(idx)}
+                className="absolute inset-0 bg-red-500/70 text-white text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                ✕
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="flex flex-wrap gap-2">
+        <div>
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            multiple
+            onChange={onAddImages}
+            disabled={uploading}
+            className="hidden"
+            id="bloque-img-upload"
+          />
+          <label
+            htmlFor="bloque-img-upload"
+            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded border font-sans cursor-pointer transition-colors ${
+              uploading ? 'border-ivory-200 text-charcoal-300' : 'border-sage-200 text-sage-600 hover:bg-sage-50'
+            }`}
+          >
+            {uploading ? <LoadingSpinner size="sm" /> : '📷'} Imágenes
+          </label>
+        </div>
+        <div>
+          <input
+            type="file"
+            accept="video/mp4,video/webm,video/ogg,video/quicktime"
+            multiple
+            onChange={onAddVideos}
+            disabled={uploadingVideo}
+            className="hidden"
+            id="bloque-vid-upload"
+          />
+          <label
+            htmlFor="bloque-vid-upload"
+            className={`inline-flex items-center gap-1 text-xs px-2.5 py-1.5 rounded border font-sans cursor-pointer transition-colors ${
+              uploadingVideo ? 'border-ivory-200 text-charcoal-300' : 'border-blush-200 text-blush-600 hover:bg-blush-50'
+            }`}
+          >
+            {uploadingVideo ? <LoadingSpinner size="sm" /> : '🎬'} Vídeos
+          </label>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AdminServices() {
   const { success, error: toastError } = useToast();
@@ -32,20 +284,29 @@ export default function AdminServices() {
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [saving, setSaving] = useState(false);
   const [uploading, setUploading] = useState(false);
+  const [uploadingVideo, setUploadingVideo] = useState(false);
+  const [blockUploading, setBlockUploading] = useState(false);
+  const [blockUploadingVideo, setBlockUploadingVideo] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [imgError, setImgError] = useState<Record<string, boolean>>({});
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   // Form servicio
   const [formS, setFormS] = useState({
     titulo: '',
     descripcion: '',
-    imagen: '',
+    imagenes: [] as string[],
+    videos: [] as string[],
     activo: true,
     orden: 1,
   });
+
   // Form bloque
-  const [formB, setFormB] = useState({ titulo: '', descripcion: '', orden: 1 });
+  const [formB, setFormB] = useState({
+    titulo: '',
+    descripcion: '',
+    imagenes: [] as string[],
+    videos: [] as string[],
+    orden: 1,
+  });
 
   const fetchServices = () => {
     setLoading(true);
@@ -58,7 +319,7 @@ export default function AdminServices() {
   useEffect(() => { fetchServices(); }, []);
 
   const resetForm = () => {
-    setFormS({ titulo: '', descripcion: '', imagen: '', activo: true, orden: 1 });
+    setFormS({ titulo: '', descripcion: '', imagenes: [], videos: [], activo: true, orden: 1 });
     setFieldErrors({});
   };
 
@@ -72,7 +333,8 @@ export default function AdminServices() {
     setFormS({
       titulo: s.titulo,
       descripcion: s.descripcion,
-      imagen: s.imagen ?? '',
+      imagenes: [...s.imagenes],
+      videos: [...s.videos],
       activo: s.activo,
       orden: s.orden ?? 1,
     });
@@ -83,7 +345,7 @@ export default function AdminServices() {
 
   const openBlocks = (s: Servicio) => {
     setSelected(s);
-    setFormB({ titulo: '', descripcion: '', orden: (s.bloques.length + 1) });
+    setFormB({ titulo: '', descripcion: '', imagenes: [], videos: [], orden: s.bloques.length + 1 });
     setModal('manageBlocks');
   };
 
@@ -94,7 +356,7 @@ export default function AdminServices() {
     if (Array.isArray(issues)) {
       for (const issue of issues) {
         const key = issue.path?.[0];
-        if (typeof key === 'string' && key in ({ titulo: 1, descripcion: 1, imagen: 1, orden: 1, activo: 1 } as Record<string, number>)) {
+        if (typeof key === 'string' && key in ({ titulo: 1, descripcion: 1, imagenes: 1, videos: 1, orden: 1, activo: 1 } as Record<string, number>)) {
           (out as Record<string, string>)[key] = issue.message;
         }
       }
@@ -102,20 +364,71 @@ export default function AdminServices() {
     return out;
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Upload multiple images for service form
+  const handleServiceImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
     setUploading(true);
     try {
-      const { url } = await servicesApi.uploadImage(file);
-      setFormS((prev) => ({ ...prev, imagen: url }));
-      setFieldErrors((prev) => ({ ...prev, imagen: undefined }));
-      success('Imagen subida correctamente');
+      const urls = await Promise.all(files.map((f) => servicesApi.uploadImage(f).then((r) => r.url)));
+      setFormS((prev) => ({ ...prev, imagenes: [...prev.imagenes, ...urls] }));
+      success(`${urls.length} imagen${urls.length > 1 ? 'es' : ''} subida${urls.length > 1 ? 's' : ''}`);
     } catch {
-      toastError('Error al subir la imagen');
+      toastError('Error al subir las imágenes');
     } finally {
       setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      e.target.value = '';
+    }
+  };
+
+  // Upload multiple videos for service form
+  const handleServiceVideos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setUploadingVideo(true);
+    try {
+      const urls = await Promise.all(files.map((f) => servicesApi.uploadVideo(f).then((r) => r.url)));
+      setFormS((prev) => ({ ...prev, videos: [...prev.videos, ...urls] }));
+      success(`${urls.length} vídeo${urls.length > 1 ? 's' : ''} subido${urls.length > 1 ? 's' : ''}`);
+    } catch {
+      toastError('Error al subir los vídeos');
+    } finally {
+      setUploadingVideo(false);
+      e.target.value = '';
+    }
+  };
+
+  // Upload multiple images for block form
+  const handleBlockImages = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setBlockUploading(true);
+    try {
+      const urls = await Promise.all(files.map((f) => servicesApi.uploadImage(f).then((r) => r.url)));
+      setFormB((prev) => ({ ...prev, imagenes: [...prev.imagenes, ...urls] }));
+      success(`${urls.length} imagen${urls.length > 1 ? 'es' : ''} subida${urls.length > 1 ? 's' : ''}`);
+    } catch {
+      toastError('Error al subir las imágenes');
+    } finally {
+      setBlockUploading(false);
+      e.target.value = '';
+    }
+  };
+
+  // Upload multiple videos for block form
+  const handleBlockVideos = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    setBlockUploadingVideo(true);
+    try {
+      const urls = await Promise.all(files.map((f) => servicesApi.uploadVideo(f).then((r) => r.url)));
+      setFormB((prev) => ({ ...prev, videos: [...prev.videos, ...urls] }));
+      success(`${urls.length} vídeo${urls.length > 1 ? 's' : ''} subido${urls.length > 1 ? 's' : ''}`);
+    } catch {
+      toastError('Error al subir los vídeos');
+    } finally {
+      setBlockUploadingVideo(false);
+      e.target.value = '';
     }
   };
 
@@ -126,7 +439,8 @@ export default function AdminServices() {
     const payload = {
       titulo: formS.titulo,
       descripcion: formS.descripcion,
-      imagen: formS.imagen.trim() || null,
+      imagenes: formS.imagenes,
+      videos: formS.videos,
       activo: formS.activo,
       orden: formS.orden,
     };
@@ -169,11 +483,6 @@ export default function AdminServices() {
     }
   };
 
-  const isValidImageUrl = (url: string): boolean => {
-    const trimmed = url.trim();
-    return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
-  };
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -198,20 +507,33 @@ export default function AdminServices() {
           {services.map((s) => (
             <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-6">
               <div className="flex items-start justify-between gap-4">
-                {s.imagen && !imgError[s.id] ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
-                    <img
-                      src={s.imagen.startsWith('http') ? s.imagen : `http://localhost:4000${s.imagen}`}
-                      className="w-full h-full object-cover rounded-sm"
-                      alt={s.titulo}
-                      onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
-                      />
+
+                {/* Preview de media */}
+                {(s.imagenes.length > 0 || s.videos.length > 0) && (
+                  <div className="flex gap-1.5 flex-shrink-0">
+                    {s.imagenes.slice(0, 3).map((url, i) => (
+                      <div key={i} className="w-14 aspect-square overflow-hidden rounded-sm bg-ivory-100">
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      </div>
+                    ))}
+                    {s.videos.slice(0, 1).map((_, i) => (
+                      <div key={i} className="w-14 aspect-square overflow-hidden rounded-sm bg-charcoal-800 flex items-center justify-center">
+                        <span className="text-white text-lg">🎬</span>
+                      </div>
+                    ))}
+                    {(s.imagenes.length + s.videos.length) > 4 && (
+                      <div className="w-14 aspect-square rounded-sm bg-ivory-100 flex items-center justify-center text-xs text-charcoal-500 font-sans">
+                        +{s.imagenes.length + s.videos.length - 4}
+                      </div>
+                    )}
                   </div>
-                ) : s.imagen ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
-                    <span aria-label="Imagen no disponible" title="Imagen no disponible">🖼️✕</span>
-                  </div>
-                ) : null}
+                )}
+
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-3 mb-1">
                     <h3 className="font-serif text-xl text-charcoal-800">{s.titulo}</h3>
@@ -219,9 +541,18 @@ export default function AdminServices() {
                       {s.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
-                  <p className="text-charcoal-500 text-sm leading-relaxed">{s.descripcion}</p>
-                  <p className="text-xs text-charcoal-400 mt-2 font-sans">{s.bloques.length} bloques</p>
+                  <p className="text-charcoal-500 text-sm leading-relaxed line-clamp-2">{s.descripcion}</p>
+                  <div className="flex gap-3 mt-2">
+                    <p className="text-xs text-charcoal-400 font-sans">{s.bloques.length} bloques</p>
+                    {s.imagenes.length > 0 && (
+                      <p className="text-xs text-charcoal-400 font-sans">{s.imagenes.length} imagen{s.imagenes.length !== 1 ? 'es' : ''}</p>
+                    )}
+                    {s.videos.length > 0 && (
+                      <p className="text-xs text-charcoal-400 font-sans">{s.videos.length} vídeo{s.videos.length !== 1 ? 's' : ''}</p>
+                    )}
+                  </div>
                 </div>
+
                 <div className="flex gap-2 flex-shrink-0">
                   <button
                     onClick={() => openBlocks(s)}
@@ -250,6 +581,12 @@ export default function AdminServices() {
                     {s.bloques.map((b) => (
                       <span key={b.id} className="text-xs bg-ivory-100 text-charcoal-600 px-3 py-1 rounded-full font-sans">
                         {b.titulo}
+                        {(b.imagenes.length > 0 || b.videos.length > 0) && (
+                          <span className="ml-1 text-charcoal-400">
+                            {b.imagenes.length > 0 && `📷${b.imagenes.length}`}
+                            {b.videos.length > 0 && ` 🎬${b.videos.length}`}
+                          </span>
+                        )}
                       </span>
                     ))}
                   </div>
@@ -260,14 +597,14 @@ export default function AdminServices() {
         </div>
       )}
 
-      {/* Modal crear/editar servicio */}
+      {/* ── Modal crear/editar servicio ─────────────────────────────────── */}
       <Modal
         isOpen={modal === 'createService' || modal === 'editService'}
         onClose={() => setModal(null)}
         title={modal === 'createService' ? 'Nuevo servicio' : 'Editar servicio'}
         dismissOnBackdrop={false}
       >
-        <div className="space-y-4">
+        <div className="space-y-5">
           <div>
             <label className="form-label">Título *</label>
             <input
@@ -284,6 +621,7 @@ export default function AdminServices() {
               <span className="text-xs text-charcoal-400 font-sans">{formS.titulo.length} / {MAX_TITULO}</span>
             </div>
           </div>
+
           <div>
             <label className="form-label">Descripción</label>
             <textarea
@@ -303,50 +641,17 @@ export default function AdminServices() {
           </div>
 
           <div>
-            <label className="form-label">Imagen (opcional)</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp"
-              onChange={handleFileUpload}
-              disabled={uploading}
-              className="block w-full text-sm text-charcoal-600 font-sans file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-ivory-200 file:text-xs file:bg-ivory-50 file:text-charcoal-700 hover:file:bg-ivory-100"
+            <label className="form-label">Imágenes y vídeos</label>
+            <MediaGallery
+              imagenes={formS.imagenes}
+              videos={formS.videos}
+              onRemoveImage={(idx) => setFormS((p) => ({ ...p, imagenes: p.imagenes.filter((_, i) => i !== idx) }))}
+              onRemoveVideo={(idx) => setFormS((p) => ({ ...p, videos: p.videos.filter((_, i) => i !== idx) }))}
+              onAddImages={handleServiceImages}
+              onAddVideos={handleServiceVideos}
+              uploading={uploading}
+              uploadingVideo={uploadingVideo}
             />
-            {uploading && (
-              <div className="flex items-center gap-2 mt-2 text-xs text-charcoal-500 font-sans">
-                <LoadingSpinner size="sm" /> Subiendo imagen...
-              </div>
-            )}
-            <div className="mt-3">
-              <label className="form-label text-xs">O introduce una URL</label>
-              <input
-                className="input-field"
-                value={formS.imagen}
-                onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
-                placeholder="https://..."
-              />
-              <p className="text-xs text-charcoal-400 mt-1 font-sans">
-                Solo URLs https válidas (máx. 500 caracteres)
-              </p>
-              {fieldErrors.imagen && (
-                <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.imagen}</p>
-              )}
-            </div>
-            {isValidImageUrl(formS.imagen) && (
-              <div className="mt-3">
-                <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">Vista previa</p>
-                <div className="w-32 aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
-                  <img
-                    src={formS.imagen.startsWith('http') ? formS.imagen : `http://localhost:4000${formS.imagen}`}
-                    alt="Vista previa"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
-              </div>
-            )}
           </div>
 
           <div className="flex items-center gap-3">
@@ -377,7 +682,7 @@ export default function AdminServices() {
           </div>
 
           <div className="flex gap-3 pt-2">
-            <button onClick={saveService} disabled={saving || !formS.titulo.trim()} className="btn-primary flex-1">
+            <button onClick={saveService} disabled={saving || uploading || uploadingVideo || !formS.titulo.trim()} className="btn-primary flex-1">
               {saving ? 'Guardando...' : 'Guardar'}
             </button>
             <button onClick={() => setModal(null)} className="btn-secondary flex-1">Cancelar</button>
@@ -385,7 +690,7 @@ export default function AdminServices() {
         </div>
       </Modal>
 
-      {/* Modal gestionar bloques */}
+      {/* ── Modal gestionar bloques ────────────────────────────────────── */}
       <Modal
         isOpen={modal === 'manageBlocks'}
         onClose={() => setModal(null)}
@@ -400,27 +705,37 @@ export default function AdminServices() {
             ) : (
               <ul className="space-y-2">
                 {selected.bloques.map((b) => (
-                  <li key={b.id} className="flex items-center justify-between p-3 bg-ivory-50 rounded text-sm">
-                    <div>
+                  <li key={b.id} className="flex items-start justify-between p-3 bg-ivory-50 rounded text-sm gap-3">
+                    <div className="min-w-0">
                       <span className="font-medium text-charcoal-700">{b.titulo}</span>
-                      {b.descripcion && <span className="text-charcoal-400 ml-2">— {b.descripcion}</span>}
+                      {b.descripcion && <span className="text-charcoal-400 ml-2 text-xs">— {b.descripcion}</span>}
+                      {(b.imagenes.length > 0 || b.videos.length > 0) && (
+                        <div className="flex gap-2 mt-1">
+                          {b.imagenes.length > 0 && (
+                            <span className="text-[11px] text-charcoal-400 font-sans">📷 {b.imagenes.length}</span>
+                          )}
+                          {b.videos.length > 0 && (
+                            <span className="text-[11px] text-charcoal-400 font-sans">🎬 {b.videos.length}</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                     <button
                       onClick={async () => {
-                        const currentSelected = selected;
-                        if (!currentSelected) return;
+                        const cur = selected;
+                        if (!cur) return;
                         if (!window.confirm(`¿Eliminar bloque "${b.titulo}"?`)) return;
                         try {
                           await blocksApi.remove(b.id);
                           success('Bloque eliminado');
-                          const updated = await servicesApi.get(currentSelected.id);
+                          const updated = await servicesApi.get(cur.id);
                           setSelected(updated);
                           fetchServices();
                         } catch {
                           toastError('Error al eliminar el bloque');
                         }
                       }}
-                      className="text-xs text-red-400 hover:text-red-600 transition-colors font-sans"
+                      className="text-xs text-red-400 hover:text-red-600 transition-colors font-sans flex-shrink-0"
                     >
                       ✕
                     </button>
@@ -444,23 +759,37 @@ export default function AdminServices() {
                 value={formB.descripcion}
                 onChange={(e) => setFormB({ ...formB, descripcion: e.target.value })}
               />
+
+              <BlockMedia
+                imagenes={formB.imagenes}
+                videos={formB.videos}
+                onRemoveImage={(idx) => setFormB((p) => ({ ...p, imagenes: p.imagenes.filter((_, i) => i !== idx) }))}
+                onRemoveVideo={(idx) => setFormB((p) => ({ ...p, videos: p.videos.filter((_, i) => i !== idx) }))}
+                onAddImages={handleBlockImages}
+                onAddVideos={handleBlockVideos}
+                uploading={blockUploading}
+                uploadingVideo={blockUploadingVideo}
+              />
+
               <button
-                disabled={saving || !formB.titulo.trim()}
+                disabled={saving || blockUploading || blockUploadingVideo || !formB.titulo.trim()}
                 className="btn-primary w-full text-sm"
                 onClick={async () => {
                   if (!formB.titulo.trim() || !selected) return;
-                  const currentSelected = selected;
+                  const cur = selected;
                   setSaving(true);
                   try {
                     await blocksApi.create({
                       titulo: formB.titulo.trim(),
                       descripcion: formB.descripcion.trim(),
-                      servicioId: currentSelected.id,
+                      imagenes: formB.imagenes,
+                      videos: formB.videos,
+                      servicioId: cur.id,
                     });
                     success('Bloque añadido');
-                    setFormB({ titulo: '', descripcion: '', orden: currentSelected.bloques.length + 2 });
+                    setFormB({ titulo: '', descripcion: '', imagenes: [], videos: [], orden: cur.bloques.length + 2 });
                     fetchServices();
-                    const updated = await servicesApi.get(currentSelected.id);
+                    const updated = await servicesApi.get(cur.id);
                     setSelected(updated);
                   } catch {
                     toastError('Error al añadir el bloque');
@@ -469,7 +798,7 @@ export default function AdminServices() {
                   }
                 }}
               >
-                Añadir bloque
+                {saving ? 'Añadiendo...' : 'Añadir bloque'}
               </button>
             </div>
           </div>

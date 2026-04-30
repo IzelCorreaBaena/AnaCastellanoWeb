@@ -7,6 +7,7 @@ export interface Bloque {
   readonly titulo: string;
   readonly descripcion: string;
   readonly imagenes: string[];
+  readonly videos: string[];
   readonly orden: number;
   readonly activo: boolean;
   readonly servicioId: string;
@@ -16,7 +17,8 @@ export interface Servicio {
   readonly id: string;
   readonly titulo: string;
   readonly descripcion: string;
-  readonly imagen?: string | null;
+  readonly imagenes: string[];
+  readonly videos: string[];
   readonly orden: number;
   readonly activo: boolean;
   readonly bloques: Bloque[];
@@ -56,13 +58,15 @@ export interface Admin {
 export interface CreateServicioPayload {
   titulo: string;
   descripcion: string;
-  imagen?: string | null;
+  imagenes?: string[];
+  videos?: string[];
 }
 
 export interface UpdateServicioPayload {
   titulo?: string;
   descripcion?: string;
-  imagen?: string | null;
+  imagenes?: string[];
+  videos?: string[];
   orden?: number;
   activo?: boolean;
 }
@@ -86,6 +90,7 @@ export interface CreateBloquePayload {
   titulo: string;
   descripcion: string;
   imagenes?: string[];
+  videos?: string[];
   orden?: number;
 }
 
@@ -93,6 +98,7 @@ export interface UpdateBloquePayload {
   titulo?: string;
   descripcion?: string;
   imagenes?: string[];
+  videos?: string[];
   orden?: number;
   activo?: boolean;
 }
@@ -115,7 +121,7 @@ export interface PaginatedResponse<T> {
 
 // ---------------------------------------------------------------------------
 // Compatibility aliases — preserve old names so any unedited page that
-// still references them (via `as unknown as`) continues to compile.
+// still references them continues to compile.
 // ---------------------------------------------------------------------------
 
 /** @deprecated Use Servicio */

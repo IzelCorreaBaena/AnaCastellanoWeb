@@ -8,9 +8,8 @@ const idParamSchema = z.object({ id: z.string().uuid() });
 const bloqueSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
   descripcion: z.string().trim().max(5000).optional().default(''),
-  // Accept any non-empty string: full URLs (Cloudinary, etc.) and relative paths
-  // like /uploads/<filename> produced by the local upload endpoint.
   imagenes: z.array(z.string().min(1)).default([]),
+  videos: z.array(z.string().min(1)).default([]),
   orden: z.number().int().optional(),
   activo: z.boolean().optional(),
   servicioId: z.string().uuid(),

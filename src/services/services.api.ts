@@ -38,9 +38,14 @@ export const servicesApi = {
   async uploadImage(file: File): Promise<{ url: string }> {
     const formData = new FormData();
     formData.append('image', file);
-    // Do NOT set Content-Type manually — axios will add the correct
-    // multipart boundary automatically when the body is a FormData instance.
     const { data } = await http.post<{ url: string }>('/uploads/image', formData);
+    return data;
+  },
+
+  async uploadVideo(file: File): Promise<{ url: string }> {
+    const formData = new FormData();
+    formData.append('video', file);
+    const { data } = await http.post<{ url: string }>('/uploads/video', formData);
     return data;
   },
 };

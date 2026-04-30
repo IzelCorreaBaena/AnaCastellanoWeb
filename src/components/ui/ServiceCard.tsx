@@ -11,7 +11,7 @@ export interface ServiceCardData {
   titulo: string;
   descripcion: string;
   bloques?: ServiceBlock[];
-  imagenUrl?: string;
+  imagenes?: string[];
 }
 
 interface ServiceCardProps {
@@ -31,27 +31,33 @@ export default function ServiceCard({
   servicio,
   ctaLabel = 'Solicitar servicio',
 }: ServiceCardProps) {
-  // Usamos ?. para que no explote si servicio es undefined
-  const firstImage =
-    servicio?.imagenUrl ||
-    servicio?.bloques?.[0]?.imagenes?.[0] ||
-    PLACEHOLDER;
-
-  // Si por algún motivo no hay servicio, no renderizamos nada
   if (!servicio) return null;
+
+  const firstImage =
+    servicio.imagenes?.[0] ||
+    servicio.bloques?.[0]?.imagenes?.[0] ||
+    PLACEHOLDER;
 
   return (
     <article className="card-service flex flex-col h-full">
       <div className="card-service__image">
-        <img src={firstImage} alt={servicio?.titulo || 'Servicio'} loading="lazy" />
+        <img
+          src={firstImage}
+          alt={servicio.titulo || 'Servicio'}
+          loading="lazy"
+          className="w-full h-full object-cover"
+          onError={(e) => {
+            (e.currentTarget as HTMLImageElement).src = PLACEHOLDER;
+          }}
+        />
       </div>
       <div className="card-service__body flex flex-col flex-1">
-        <h3 className="card-service__title">{servicio?.titulo || 'Cargando...'}</h3>
+        <h3 className="card-service__title">{servicio.titulo || 'Cargando...'}</h3>
         <p className="card-service__description flex-1">
-          {truncate(servicio?.descripcion || '')}
+          {truncate(servicio.descripcion || '')}
         </p>
         <Link
-          to={`/reservations?service=${encodeURIComponent(servicio?.id || '')}`}
+          to={`/reservations?service=${encodeURIComponent(servicio.id || '')}`}
           className="mt-6 inline-flex items-center gap-2 text-sm uppercase tracking-[0.18em] text-sage-600 hover:text-sage-700 transition"
         >
           {ctaLabel}

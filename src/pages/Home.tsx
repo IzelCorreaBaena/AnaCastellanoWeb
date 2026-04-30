@@ -66,6 +66,7 @@ export default function Home(): JSX.Element {
             id: s.id,
             titulo: s.titulo,
             descripcion: s.descripcion,
+            imagenes: s.imagenes,
             bloques: s.bloques,
           })),
         );
