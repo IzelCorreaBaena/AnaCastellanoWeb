@@ -6,6 +6,16 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
 import ImageUploader from '../../components/ui/ImageUploader';
 
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
+  : 'http://localhost:4000';
+const resolveMedia = (src: string) =>
+  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
+
+const isVideoUrl = (url: string): boolean =>
+  /\/video\/upload\//.test(url) ||
+  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+
 type ModalMode = 'createCurso' | 'editCurso' | null;
 
 interface FieldErrors {
@@ -220,27 +230,36 @@ export default function AdminCursos() {
       ) : (
         <div className="space-y-4">
           {cursos.map((c) => (
-            <div key={c.id} className="bg-white rounded-sm border border-ivory-200 p-6">
-              <div className="flex items-start justify-between gap-4">
+            <div key={c.id} className="bg-white rounded-sm border border-ivory-200 p-4 sm:p-6">
+              <div className="flex items-start gap-4">
+                {/* Thumbnail — imagen o vídeo */}
                 {c.imagen && !imgError[c.id] ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
-                    <img
-                      src={c.imagen.startsWith('http') ? c.imagen : `http://localhost:4000${c.imagen}`}
-                      className="w-full h-full object-cover rounded-sm"
-                      alt={c.titulo}
-                      onError={() => setImgError((prev) => ({ ...prev, [c.id]: true }))}
-                    />
+                  <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
+                    {isVideoUrl(c.imagen) ? (
+                      <video
+                        src={resolveMedia(c.imagen)}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                        onError={() => setImgError((prev) => ({ ...prev, [c.id]: true }))}
+                      />
+                    ) : (
+                      <img
+                        src={resolveMedia(c.imagen)}
+                        className="w-full h-full object-cover"
+                        alt={c.titulo}
+                        onError={() => setImgError((prev) => ({ ...prev, [c.id]: true }))}
+                      />
+                    )}
                   </div>
                 ) : c.imagen ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
-                    <span aria-label="Imagen no disponible" title="Imagen no disponible">
-                      🖼️✕
-                    </span>
+                  <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
+                    <span aria-label="Imagen no disponible">—</span>
                   </div>
                 ) : null}
 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1 flex-wrap">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-serif text-xl text-charcoal-800">{c.titulo}</h3>
                     <span
                       className={`text-xs px-2 py-0.5 rounded-full font-sans ${
@@ -250,45 +269,50 @@ export default function AdminCursos() {
                       {c.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
-                  <p className="text-charcoal-500 text-sm leading-relaxed">{c.descripcion}</p>
+                  <p className="text-charcoal-500 text-sm leading-relaxed line-clamp-2">{c.descripcion}</p>
 
                   {(c.precio != null || c.duracion || c.modalidad) && (
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-sans">
+                    <div className="mt-2 flex flex-wrap gap-2 text-xs font-sans">
                       {c.precio != null && (
-                        <span className="px-3 py-1 rounded-full bg-sage-50 text-sage-700">
+                        <span className="px-2 py-0.5 rounded-full bg-sage-50 text-sage-700">
                           {formatPrecio(c.precio)}
                         </span>
                       )}
                       {c.duracion && (
-                        <span className="px-3 py-1 rounded-full bg-ivory-100 text-charcoal-600">
+                        <span className="px-2 py-0.5 rounded-full bg-ivory-100 text-charcoal-600">
                           {c.duracion}
                         </span>
                       )}
                       {c.modalidad && (
-                        <span className="px-3 py-1 rounded-full bg-ivory-100 text-charcoal-600">
+                        <span className="px-2 py-0.5 rounded-full bg-ivory-100 text-charcoal-600">
                           {c.modalidad}
                         </span>
                       )}
                     </div>
                   )}
 
-                  <p className="text-xs text-charcoal-400 mt-2 font-sans">Orden: {c.orden}</p>
+                  {(c.imagenes?.length ?? 0) > 0 && (
+                    <p className="text-xs text-charcoal-400 mt-1 font-sans">
+                      {c.imagenes!.length} archivo{c.imagenes!.length !== 1 ? 's' : ''}
+                    </p>
+                  )}
                 </div>
+              </div>
 
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => openEdit(c)}
-                    className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteCurso(c.id)}
-                    className="text-xs px-3 py-1.5 rounded border border-red-100 text-red-500 hover:bg-red-50 transition-colors font-sans"
-                  >
-                    Eliminar
-                  </button>
-                </div>
+              {/* Action buttons — separate row for mobile */}
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-ivory-100">
+                <button
+                  onClick={() => openEdit(c)}
+                  className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => deleteCurso(c.id)}
+                  className="text-xs px-3 py-1.5 rounded border border-red-100 text-red-500 hover:bg-red-50 transition-colors font-sans"
+                >
+                  Eliminar
+                </button>
               </div>
             </div>
           ))}

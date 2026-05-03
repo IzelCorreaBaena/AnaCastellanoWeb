@@ -25,6 +25,16 @@ interface FieldErrors {
 const MAX_TITULO = 150;
 const MAX_DESCRIPCION = 5000;
 
+const API_ORIGIN = import.meta.env.VITE_API_URL
+  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
+  : 'http://localhost:4000';
+const resolveMedia = (src: string) =>
+  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
+
+const isVideoUrl = (url: string): boolean =>
+  /\/video\/upload\//.test(url) ||
+  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+
 export default function AdminServices() {
   const { success, error: toastError } = useToast();
   const [services, setServices] = useState<Servicio[]>([]);
@@ -37,7 +47,6 @@ export default function AdminServices() {
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Form servicio
   const [formS, setFormS] = useState({
     titulo: '',
     descripcion: '',
@@ -45,7 +54,6 @@ export default function AdminServices() {
     activo: true,
     orden: 1,
   });
-  // Form bloque
   const [formB, setFormB] = useState({ titulo: '', descripcion: '', orden: 1 });
 
   const fetchServices = () => {
@@ -111,9 +119,9 @@ export default function AdminServices() {
       const { url } = await servicesApi.uploadImage(file);
       setFormS((prev) => ({ ...prev, imagen: url }));
       setFieldErrors((prev) => ({ ...prev, imagen: undefined }));
-      success('Imagen subida correctamente');
+      success('Archivo subido correctamente');
     } catch {
-      toastError('Error al subir la imagen');
+      toastError('Error al subir el archivo');
     } finally {
       setUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
@@ -170,7 +178,7 @@ export default function AdminServices() {
     }
   };
 
-  const isValidImageUrl = (url: string): boolean => {
+  const isValidMediaUrl = (url: string): boolean => {
     const trimmed = url.trim();
     return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
   };
@@ -197,56 +205,70 @@ export default function AdminServices() {
       ) : (
         <div className="space-y-4">
           {services.map((s) => (
-            <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-6">
-              <div className="flex items-start justify-between gap-4">
+            <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-4 sm:p-6">
+              <div className="flex items-start gap-4">
+                {/* Thumbnail — imagen o vídeo */}
                 {s.imagen && !imgError[s.id] ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
-                    <img
-                      src={s.imagen.startsWith('http') ? s.imagen : `http://localhost:4000${s.imagen}`}
-                      className="w-full h-full object-cover rounded-sm"
-                      alt={s.titulo}
-                      onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
+                  <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
+                    {isVideoUrl(s.imagen) ? (
+                      <video
+                        src={resolveMedia(s.imagen)}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
                       />
+                    ) : (
+                      <img
+                        src={resolveMedia(s.imagen)}
+                        className="w-full h-full object-cover"
+                        alt={s.titulo}
+                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
+                      />
+                    )}
                   </div>
                 ) : s.imagen ? (
-                  <div className="w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
-                    <span aria-label="Imagen no disponible" title="Imagen no disponible">🖼️✕</span>
+                  <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
+                    <span aria-label="Imagen no disponible">—</span>
                   </div>
                 ) : null}
+
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
+                  <div className="flex flex-wrap items-center gap-2 mb-1">
                     <h3 className="font-serif text-xl text-charcoal-800">{s.titulo}</h3>
                     <span className={`text-xs px-2 py-0.5 rounded-full font-sans ${s.activo ? 'bg-sage-100 text-sage-700' : 'bg-gray-100 text-gray-500'}`}>
                       {s.activo ? 'Activo' : 'Inactivo'}
                     </span>
                   </div>
-                  <p className="text-charcoal-500 text-sm leading-relaxed">{s.descripcion}</p>
+                  <p className="text-charcoal-500 text-sm leading-relaxed line-clamp-2">{s.descripcion}</p>
                   <p className="text-xs text-charcoal-400 mt-2 font-sans">{s.bloques.length} bloques</p>
-                </div>
-                <div className="flex gap-2 flex-shrink-0">
-                  <button
-                    onClick={() => openBlocks(s)}
-                    className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
-                  >
-                    Bloques
-                  </button>
-                  <button
-                    onClick={() => openEdit(s)}
-                    className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
-                  >
-                    Editar
-                  </button>
-                  <button
-                    onClick={() => deleteService(s.id)}
-                    className="text-xs px-3 py-1.5 rounded border border-red-100 text-red-500 hover:bg-red-50 transition-colors font-sans"
-                  >
-                    Eliminar
-                  </button>
                 </div>
               </div>
 
+              {/* Action buttons — separate row for better mobile layout */}
+              <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-ivory-100">
+                <button
+                  onClick={() => openBlocks(s)}
+                  className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
+                >
+                  Bloques ({s.bloques.length})
+                </button>
+                <button
+                  onClick={() => openEdit(s)}
+                  className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => deleteService(s.id)}
+                  className="text-xs px-3 py-1.5 rounded border border-red-100 text-red-500 hover:bg-red-50 transition-colors font-sans"
+                >
+                  Eliminar
+                </button>
+              </div>
+
               {s.bloques.length > 0 && (
-                <div className="mt-4 pt-4 border-t border-ivory-100">
+                <div className="mt-3">
                   <div className="flex flex-wrap gap-2">
                     {s.bloques.map((b) => (
                       <span key={b.id} className="text-xs bg-ivory-100 text-charcoal-600 px-3 py-1 rounded-full font-sans">
@@ -285,6 +307,7 @@ export default function AdminServices() {
               <span className="text-xs text-charcoal-400 font-sans">{formS.titulo.length} / {MAX_TITULO}</span>
             </div>
           </div>
+
           <div>
             <label className="form-label">Descripción</label>
             <textarea
@@ -304,20 +327,25 @@ export default function AdminServices() {
           </div>
 
           <div>
-            <label className="form-label">Imagen (opcional)</label>
+            <label className="form-label">Imagen o vídeo principal (opcional)</label>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp"
+              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
               onChange={handleFileUpload}
               disabled={uploading}
               className="block w-full text-sm text-charcoal-600 font-sans file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-ivory-200 file:text-xs file:bg-ivory-50 file:text-charcoal-700 hover:file:bg-ivory-100"
             />
             {uploading && (
               <div className="flex items-center gap-2 mt-2 text-xs text-charcoal-500 font-sans">
-                <LoadingSpinner size="sm" /> Subiendo imagen...
+                <LoadingSpinner size="sm" /> Subiendo…
               </div>
             )}
+            <p className="text-xs text-charcoal-400 mt-1 font-sans">
+              Imagen: JPEG, PNG, WebP (máx. 5 MB) · Vídeo: MP4, WebM, MOV (máx. 100 MB)
+            </p>
+
+            {/* Manual URL input */}
             <div className="mt-3">
               <label className="form-label text-xs">O introduce una URL</label>
               <input
@@ -326,25 +354,33 @@ export default function AdminServices() {
                 onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
                 placeholder="https://..."
               />
-              <p className="text-xs text-charcoal-400 mt-1 font-sans">
-                Solo URLs https válidas (máx. 500 caracteres)
-              </p>
               {fieldErrors.imagen && (
                 <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.imagen}</p>
               )}
             </div>
-            {isValidImageUrl(formS.imagen) && (
+
+            {/* Preview */}
+            {isValidMediaUrl(formS.imagen) && (
               <div className="mt-3">
                 <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">Vista previa</p>
-                <div className="w-32 aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
-                  <img
-                    src={formS.imagen.startsWith('http') ? formS.imagen : `http://localhost:4000${formS.imagen}`}
-                    alt="Vista previa"
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
+                <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
+                  {isVideoUrl(formS.imagen) ? (
+                    <video
+                      src={formS.imagen}
+                      className="w-full h-full object-cover"
+                      muted
+                      controls
+                    />
+                  ) : (
+                    <img
+                      src={formS.imagen}
+                      alt="Vista previa"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  )}
                 </div>
               </div>
             )}
@@ -379,7 +415,7 @@ export default function AdminServices() {
 
           <div className="flex gap-3 pt-2">
             <button onClick={saveService} disabled={saving || !formS.titulo.trim()} className="btn-primary flex-1">
-              {saving ? 'Guardando...' : 'Guardar'}
+              {saving ? 'Guardando…' : 'Guardar'}
             </button>
             <button onClick={() => setModal(null)} className="btn-secondary flex-1">Cancelar</button>
           </div>
@@ -395,13 +431,12 @@ export default function AdminServices() {
       >
         {selected && (
           <div className="space-y-6">
-            {/* Lista bloques existentes */}
             {selected.bloques.length === 0 ? (
               <p className="text-charcoal-400 text-sm font-sans text-center py-4">Sin bloques todavía.</p>
             ) : (
-              <ul className="space-y-2">
+              <ul className="space-y-3">
                 {selected.bloques.map((b) => (
-                  <li key={b.id} className="p-3 bg-ivory-50 rounded text-sm space-y-2">
+                  <li key={b.id} className="p-3 bg-ivory-50 rounded text-sm space-y-3">
                     <div className="flex items-start justify-between gap-2">
                       <div>
                         <span className="font-medium text-charcoal-700">{b.titulo}</span>
@@ -428,7 +463,7 @@ export default function AdminServices() {
                       </button>
                     </div>
                     <div>
-                      <p className="text-xs text-charcoal-400 font-sans mb-1">Imágenes del bloque</p>
+                      <p className="text-xs text-charcoal-400 font-sans mb-2">Imágenes y vídeos del bloque</p>
                       <ImageUploader
                         images={b.imagenes ?? []}
                         uploadFn={servicesApi.uploadImage}
@@ -439,7 +474,7 @@ export default function AdminServices() {
                             setSelected(updated);
                             fetchServices();
                           } catch {
-                            toastError('Error al actualizar imágenes del bloque');
+                            toastError('Error al actualizar los archivos del bloque');
                           }
                         }}
                       />

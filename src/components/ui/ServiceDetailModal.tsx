@@ -11,27 +11,62 @@ interface Props {
 const API_ORIGIN = import.meta.env.VITE_API_URL
   ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
   : 'http://localhost:4000';
-const resolveImg = (src: string) =>
+const resolveMedia = (src: string) =>
   src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
 
+const isVideoUrl = (url: string): boolean =>
+  /\/video\/upload\//.test(url) ||
+  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+
 export default function ServiceDetailModal({ servicio, onClose }: Props) {
-  const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({});
+  const [activeMedia, setActiveMedia] = useState<string | null>(null);
+  const [mainError, setMainError] = useState(false);
+  const [thumbErrors, setThumbErrors] = useState<Record<number, boolean>>({});
 
   if (!servicio) return null;
 
-  const bloqueImages = servicio.bloques.flatMap((b) => b.imagenes ?? []).slice(0, 6);
+  // Build gallery: service main image + all block images
+  const gallery: string[] = [];
+  if (servicio.imagen) gallery.push(servicio.imagen);
+  servicio.bloques.forEach((b) => {
+    if (b.imagenes) b.imagenes.forEach((url) => gallery.push(url));
+  });
+
+  const currentMedia = activeMedia ?? gallery[0] ?? null;
+  const isCurrentVideo = currentMedia ? isVideoUrl(currentMedia) : false;
+
+  const handleThumbClick = (url: string) => {
+    if (url !== currentMedia) {
+      setActiveMedia(url);
+      setMainError(false);
+    }
+  };
 
   return (
     <Modal isOpen size="lg" onClose={onClose} dismissOnBackdrop>
-      {/* Image area */}
-      <div className="relative aspect-video bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm overflow-hidden -mx-6 -mt-6 mb-6">
-        {servicio.imagen && !imgErrors['main'] ? (
-          <img
-            src={resolveImg(servicio.imagen)}
-            alt={servicio.titulo}
-            className="w-full h-full object-cover"
-            onError={() => setImgErrors((p) => ({ ...p, main: true }))}
-          />
+      {/* Main media area */}
+      <div className="relative bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm overflow-hidden -mx-6 -mt-6 mb-4"
+        style={{ aspectRatio: '4/3' }}
+      >
+        {currentMedia && !mainError ? (
+          isCurrentVideo ? (
+            <video
+              key={currentMedia}
+              src={resolveMedia(currentMedia)}
+              className="w-full h-full object-cover"
+              controls
+              playsInline
+              onError={() => setMainError(true)}
+            />
+          ) : (
+            <img
+              key={currentMedia}
+              src={resolveMedia(currentMedia)}
+              alt={servicio.titulo}
+              className="w-full h-full object-cover"
+              onError={() => setMainError(true)}
+            />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center">
             <svg className="w-16 h-16 text-sage-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -44,29 +79,61 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
           type="button"
           onClick={onClose}
           aria-label="Cerrar"
-          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors text-charcoal-600"
+          className="absolute top-3 right-3 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center hover:bg-white transition-colors text-charcoal-600 z-10"
         >
           ×
         </button>
       </div>
 
-      {/* Bloque image thumbnails */}
-      {bloqueImages.length > 0 && (
-        <div className="flex gap-2 mb-6 overflow-x-auto pb-1">
-          {bloqueImages.map((url, i) => (
-            <div key={i} className="w-16 h-16 flex-shrink-0 rounded-sm overflow-hidden bg-ivory-100">
-              {!imgErrors[`b${i}`] ? (
-                <img
-                  src={resolveImg(url)}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  onError={() => setImgErrors((p) => ({ ...p, [`b${i}`]: true }))}
-                />
-              ) : (
-                <div className="w-full h-full bg-ivory-200" />
-              )}
-            </div>
-          ))}
+      {/* Thumbnail gallery — shown when there are multiple media items */}
+      {gallery.length > 1 && (
+        <div className="grid grid-cols-5 sm:grid-cols-6 gap-1.5 mb-5">
+          {gallery.map((url, i) => {
+            const isThumbVideo = isVideoUrl(url);
+            const isActive = url === currentMedia;
+            return (
+              <button
+                key={i}
+                type="button"
+                onClick={() => handleThumbClick(url)}
+                className={`relative aspect-square rounded-sm overflow-hidden border-2 transition-all ${
+                  isActive
+                    ? 'border-gold-400 ring-1 ring-gold-300'
+                    : 'border-transparent hover:border-ivory-300'
+                }`}
+              >
+                {!thumbErrors[i] ? (
+                  isThumbVideo ? (
+                    <video
+                      src={resolveMedia(url)}
+                      className="w-full h-full object-cover"
+                      muted
+                      preload="metadata"
+                      onError={() => setThumbErrors((p) => ({ ...p, [i]: true }))}
+                    />
+                  ) : (
+                    <img
+                      src={resolveMedia(url)}
+                      alt=""
+                      className="w-full h-full object-cover"
+                      onError={() => setThumbErrors((p) => ({ ...p, [i]: true }))}
+                    />
+                  )
+                ) : (
+                  <div className="w-full h-full bg-ivory-200" />
+                )}
+                {isThumbVideo && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-5 h-5 rounded-full bg-black/40 flex items-center justify-center">
+                      <svg width="8" height="8" viewBox="0 0 10 10" fill="white">
+                        <path d="M2 1.5l7 3.5-7 3.5V1.5z" />
+                      </svg>
+                    </div>
+                  </div>
+                )}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -94,15 +161,6 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
                       <span className="font-sans font-medium text-charcoal-700">{b.titulo}</span>
                       {b.descripcion && (
                         <span className="text-charcoal-500 text-sm"> — {b.descripcion}</span>
-                      )}
-                      {b.imagenes && b.imagenes.length > 0 && (
-                        <div className="flex gap-1.5 mt-2 flex-wrap">
-                          {b.imagenes.map((url, i) => (
-                            <div key={i} className="w-14 h-14 rounded-sm overflow-hidden bg-ivory-100">
-                              <img src={resolveImg(url)} alt="" className="w-full h-full object-cover" />
-                            </div>
-                          ))}
-                        </div>
                       )}
                     </div>
                   </div>
