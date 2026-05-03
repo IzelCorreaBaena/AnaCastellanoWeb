@@ -64,7 +64,11 @@ export const servicesController = {
     try {
       const { id } = idParamSchema.parse(req.params);
       const data = servicioSchema.partial().parse(req.body);
-      const servicio = await prisma.servicio.update({ where: { id }, data });
+      const servicio = await prisma.servicio.update({
+        where: { id },
+        data,
+        include: { bloques: { orderBy: { orden: 'asc' } } },
+      });
       res.json(servicio);
     } catch (e) { next(e); }
   }) as RequestHandler,

@@ -21,6 +21,10 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
 const resolveImageSrc = (src: string): string =>
   src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
 
+const isVideoUrl = (url: string): boolean =>
+  /\/video\/upload\//.test(url) ||
+  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+
 // ─── Skeleton card — displayed during loading ──────────────────────────────────
 
 function CursoCardSkeleton() {
@@ -64,16 +68,28 @@ function CursoCard({ curso, onClick }: CursoCardProps) {
       tabIndex={0}
       onKeyDown={(e) => e.key === 'Enter' && onClick()}
     >
-      {/* Image — 4:3 aspect ratio with graceful fallback */}
+      {/* Image/video — aspect ratio with graceful fallback */}
       <div className="card-curso__image">
         {curso.imagen && !imgError ? (
-          <img
-            src={resolveImageSrc(curso.imagen)}
-            alt={curso.titulo}
-            className="card-curso__img"
-            loading="lazy"
-            onError={() => setImgError(true)}
-          />
+          isVideoUrl(curso.imagen) ? (
+            <video
+              src={resolveImageSrc(curso.imagen)}
+              className="card-curso__img"
+              muted
+              loop
+              autoPlay
+              playsInline
+              onError={() => setImgError(true)}
+            />
+          ) : (
+            <img
+              src={resolveImageSrc(curso.imagen)}
+              alt={curso.titulo}
+              className="card-curso__img"
+              loading="lazy"
+              onError={() => setImgError(true)}
+            />
+          )
         ) : (
           <div className="card-curso__placeholder" aria-hidden="true">
             {/* Floral placeholder — botanical leaf motif */}

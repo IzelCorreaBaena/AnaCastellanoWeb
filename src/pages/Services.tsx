@@ -15,6 +15,10 @@ const API_ORIGIN = import.meta.env.VITE_API_URL
 const resolveImageSrc = (src: string): string =>
   src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
 
+const isVideoUrl = (url: string): boolean =>
+  /\/video\/upload\//.test(url) ||
+  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+
 const fallbackServices: Servicio[] = [
   {
     id: '1', orden: 1, activo: true, createdAt: FALLBACK_DATE, updatedAt: FALLBACK_DATE,
@@ -117,17 +121,29 @@ export default function Services() {
                   {/* Imagen/visual */}
                   <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
                     
-                    {/* Si HAY imagen, muestra la foto */}
+                    {/* Si HAY imagen o vídeo, muéstral@ */}
                     {servicio.imagen && (
-                      <img
-                        src={resolveImageSrc(servicio.imagen)}
-                        alt={servicio.titulo}
-                        className="absolute inset-0 w-full h-full object-cover z-10"
-                        onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                      />
+                      isVideoUrl(servicio.imagen) ? (
+                        <video
+                          src={resolveImageSrc(servicio.imagen)}
+                          className="absolute inset-0 w-full h-full object-cover z-10"
+                          muted
+                          loop
+                          autoPlay
+                          playsInline
+                          onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <img
+                          src={resolveImageSrc(servicio.imagen)}
+                          alt={servicio.titulo}
+                          className="absolute inset-0 w-full h-full object-cover z-10"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      )
                     )}
 
-                    {/* Si NO hay imagen, muestra la montañita */}
+                    {/* Si NO hay imagen, muestra el placeholder */}
                     {!servicio.imagen && (
                       <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
