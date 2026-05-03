@@ -136,6 +136,7 @@ model Curso {
   titulo      String   @db.VarChar(150)
   descripcion String   @db.Text
   imagen      String?  @db.VarChar(500)
+  imagenes    String[] // Array de URLs (imágenes y vídeos) — TEXT[] en PostgreSQL
   precio      Decimal? @db.Decimal(10, 2)
   duracion    String?  @db.VarChar(100)
   modalidad   String?  @db.VarChar(100)
