@@ -202,13 +202,23 @@ export default function AdminCursos() {
     }
   };
 
+  const toggleActivo = async (id: string, current: boolean): Promise<void> => {
+    try {
+      await cursosApi.update(id, { activo: !current });
+      success(current ? 'Curso ocultado' : 'Curso publicado');
+      fetchCursos();
+    } catch {
+      toastError('Error al cambiar la visibilidad');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-3xl text-charcoal-800">Cursos</h1>
           <p className="text-charcoal-500 mt-1 font-sans text-sm">
-            {cursos.length} cursos publicados
+            {cursos.filter((c) => c.activo).length} visibles · {cursos.filter((c) => !c.activo).length} ocultos
           </p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
@@ -299,8 +309,18 @@ export default function AdminCursos() {
                 </div>
               </div>
 
-              {/* Action buttons — separate row for mobile */}
+              {/* Action buttons */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-ivory-100">
+                <button
+                  onClick={() => toggleActivo(c.id, c.activo)}
+                  className={`text-xs px-3 py-1.5 rounded border font-sans transition-colors ${
+                    c.activo
+                      ? 'border-sage-200 text-sage-600 hover:bg-sage-50'
+                      : 'border-charcoal-200 text-charcoal-500 hover:bg-ivory-100'
+                  }`}
+                >
+                  {c.activo ? 'Ocultar' : 'Publicar'}
+                </button>
                 <button
                   onClick={() => openEdit(c)}
                   className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"

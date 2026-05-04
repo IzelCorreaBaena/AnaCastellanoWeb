@@ -9,11 +9,6 @@ import ImageUploader from '../../components/ui/ImageUploader';
 
 type ModalMode = 'createService' | 'editService' | 'manageBlocks' | null;
 
-interface ZodIssue {
-  path: (string | number)[];
-  message: string;
-}
-
 interface FieldErrors {
   titulo?: string;
   descripcion?: string;
@@ -98,13 +93,13 @@ export default function AdminServices() {
 
   const parseFieldErrors = (err: unknown): FieldErrors => {
     const out: FieldErrors = {};
-    const response = (err as { response?: { data?: { issues?: ZodIssue[] } } })?.response;
+    const response = (err as { response?: { data?: { issues?: Record<string, string[]> } } })?.response;
     const issues = response?.data?.issues;
-    if (Array.isArray(issues)) {
-      for (const issue of issues) {
-        const key = issue.path?.[0];
-        if (typeof key === 'string' && key in ({ titulo: 1, descripcion: 1, imagen: 1, orden: 1, activo: 1 } as Record<string, number>)) {
-          (out as Record<string, string>)[key] = issue.message;
+    const known = new Set(['titulo', 'descripcion', 'imagen', 'orden', 'activo']);
+    if (issues && typeof issues === 'object' && !Array.isArray(issues)) {
+      for (const [key, messages] of Object.entries(issues)) {
+        if (known.has(key) && Array.isArray(messages) && messages.length > 0) {
+          (out as Record<string, string>)[key] = messages[0];
         }
       }
     }
@@ -178,6 +173,16 @@ export default function AdminServices() {
     }
   };
 
+  const toggleActivo = async (id: string, current: boolean) => {
+    try {
+      await servicesApi.update(id, { activo: !current });
+      success(current ? 'Servicio ocultado' : 'Servicio publicado');
+      fetchServices();
+    } catch {
+      toastError('Error al cambiar la visibilidad');
+    }
+  };
+
   const isValidMediaUrl = (url: string): boolean => {
     const trimmed = url.trim();
     return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
@@ -188,7 +193,9 @@ export default function AdminServices() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="font-serif text-3xl text-charcoal-800">Servicios</h1>
-          <p className="text-charcoal-500 mt-1 font-sans text-sm">{services.length} servicios publicados</p>
+          <p className="text-charcoal-500 mt-1 font-sans text-sm">
+            {services.filter((s) => s.activo).length} visibles · {services.filter((s) => !s.activo).length} ocultos
+          </p>
         </div>
         <button onClick={openCreate} className="btn-primary text-sm">
           + Nuevo servicio
@@ -245,8 +252,18 @@ export default function AdminServices() {
                 </div>
               </div>
 
-              {/* Action buttons — separate row for better mobile layout */}
+              {/* Action buttons */}
               <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-ivory-100">
+                <button
+                  onClick={() => toggleActivo(s.id, s.activo)}
+                  className={`text-xs px-3 py-1.5 rounded border font-sans transition-colors ${
+                    s.activo
+                      ? 'border-sage-200 text-sage-600 hover:bg-sage-50'
+                      : 'border-charcoal-200 text-charcoal-500 hover:bg-ivory-100'
+                  }`}
+                >
+                  {s.activo ? 'Ocultar' : 'Publicar'}
+                </button>
                 <button
                   onClick={() => openBlocks(s)}
                   className="text-xs px-3 py-1.5 rounded border border-ivory-200 text-charcoal-600 hover:border-sage-300 transition-colors font-sans"
