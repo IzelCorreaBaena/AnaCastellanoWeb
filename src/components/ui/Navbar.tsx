@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Link, NavLink, useLocation } from 'react-router-dom';
 
 interface NavLinkItem {
@@ -57,6 +58,7 @@ export default function Navbar({
   const solid = forceSolid || scrolled || open;
 
   return (
+    <>
     <header className={`nav ${solid ? 'nav-solid' : 'nav-transparent'}`}>
       <div className="nav__inner">
         <Link to="/" className="nav__logo flex items-baseline gap-2">
@@ -98,9 +100,13 @@ export default function Navbar({
         </button>
       </div>
 
-      {/* Mobile drawer */}
+    </header>
+
+    {/* Mobile drawer — rendered via portal so that the nav's backdrop-filter
+        does not trap position:fixed children inside the header's bounding box. */}
+    {createPortal(
       <div
-        className={`fixed inset-0 z-modal md:hidden ${
+        className={`fixed inset-0 z-[9000] md:hidden ${
           open ? 'pointer-events-auto' : 'pointer-events-none'
         }`}
         aria-hidden={!open}
@@ -112,9 +118,10 @@ export default function Navbar({
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`absolute right-0 top-0 h-full w-72 max-w-[85%] bg-ivory-50 shadow-xl p-8 flex flex-col gap-6 transition-transform duration-slow ease-soft-out ${
+          className={`absolute right-0 top-0 h-full w-72 max-w-[85%] shadow-xl p-8 flex flex-col gap-6 transition-transform duration-slow ease-soft-out ${
             open ? 'translate-x-0' : 'translate-x-full'
           }`}
+          style={{ backgroundColor: '#FDFCF9' }}
         >
           <div className="flex items-center justify-between">
             <span className="font-serif text-xl text-charcoal-900">Menú</span>
@@ -134,10 +141,11 @@ export default function Navbar({
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  `py-3 px-2 border-b border-ivory-300 font-sans text-charcoal-800 ${
+                  `py-3 px-2 border-b font-sans text-charcoal-800 ${
                     isActive ? 'text-sage-600' : ''
                   }`
                 }
+                style={{ borderColor: '#EDE3D5' }}
               >
                 {link.label}
               </NavLink>
@@ -147,7 +155,9 @@ export default function Navbar({
             {ctaLabel}
           </Link>
         </aside>
-      </div>
-    </header>
+      </div>,
+      document.body,
+    )}
+    </>
   );
 }
