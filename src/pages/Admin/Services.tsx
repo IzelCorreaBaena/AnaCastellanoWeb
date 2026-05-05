@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { servicesApi } from '@services/services.api';
 import { blocksApi } from '@services/blocks.api';
 import type { Servicio } from '@app-types/models';
@@ -28,16 +28,13 @@ export default function AdminServices() {
   const [modal, setModal] = useState<ModalMode>(null);
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
-  const [blockSaving, setBlockSaving] = useState<Record<number, boolean>>({});
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const [blockSaving, setBlockSaving] = useState<Record<string, boolean>>({});
 
   const [formS, setFormS] = useState({
     titulo: '',
     descripcion: '',
-    imagen: '',
     imagenes: [] as string[],
     activo: true,
     orden: 1,
@@ -55,7 +52,7 @@ export default function AdminServices() {
   useEffect(() => { fetchServices(); }, []);
 
   const resetForm = () => {
-    setFormS({ titulo: '', descripcion: '', imagen: '', imagenes: [], activo: true, orden: 1 });
+    setFormS({ titulo: '', descripcion: '', imagenes: [], activo: true, orden: 1 });
     setFieldErrors({});
   };
 
@@ -69,7 +66,6 @@ export default function AdminServices() {
     setFormS({
       titulo: s.titulo,
       descripcion: s.descripcion,
-      imagen: s.imagen ?? '',
       imagenes: s.imagenes ?? [],
       activo: s.activo,
       orden: s.orden ?? 1,
@@ -100,33 +96,6 @@ export default function AdminServices() {
     return out;
   };
 
-  const ALLOWED_SERVICE_MIME = new Set([
-    'image/jpeg', 'image/png', 'image/webp',
-    'video/mp4', 'video/webm', 'video/quicktime',
-  ]);
-
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!ALLOWED_SERVICE_MIME.has(file.type)) {
-      toastError('Tipo de archivo no permitido. Solo JPEG, PNG, WebP, MP4, WebM, MOV.');
-      if (fileInputRef.current) fileInputRef.current.value = '';
-      return;
-    }
-    setUploading(true);
-    try {
-      const { url } = await servicesApi.uploadImage(file);
-      setFormS((prev) => ({ ...prev, imagen: url }));
-      setFieldErrors((prev) => ({ ...prev, imagen: undefined }));
-      success('Archivo subido correctamente');
-    } catch {
-      toastError('Error al subir el archivo');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
-    }
-  };
-
   const saveService = async () => {
     if (!formS.titulo.trim()) return;
     setSaving(true);
@@ -134,8 +103,8 @@ export default function AdminServices() {
     const payload = {
       titulo: formS.titulo,
       descripcion: formS.descripcion,
-      imagen: formS.imagen.trim() || null,
-      imagenes: formS.imagenes,
+      imagen: formS.imagenes[0] ?? null,
+      imagenes: formS.imagenes.length > 0 ? formS.imagenes : undefined,
       activo: formS.activo,
       orden: formS.orden,
     };
@@ -186,11 +155,6 @@ export default function AdminServices() {
     } catch {
       toastError('Error al cambiar la visibilidad');
     }
-  };
-
-  const isValidMediaUrl = (url: string): boolean => {
-    const trimmed = url.trim();
-    return trimmed.length > 0 && /^https?:\/\//i.test(trimmed);
   };
 
   return (
@@ -349,68 +313,7 @@ export default function AdminServices() {
           </div>
 
           <div>
-            <label className="form-label">Imagen o vídeo principal (opcional)</label>
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
-              onChange={handleFileUpload}
-              disabled={uploading}
-              className="block w-full text-sm text-charcoal-600 font-sans file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-ivory-200 file:text-xs file:bg-ivory-50 file:text-charcoal-700 hover:file:bg-ivory-100"
-            />
-            {uploading && (
-              <div className="flex items-center gap-2 mt-2 text-xs text-charcoal-500 font-sans">
-                <LoadingSpinner size="sm" /> Subiendo…
-              </div>
-            )}
-            <p className="text-xs text-charcoal-400 mt-1 font-sans">
-              Imagen: JPEG, PNG, WebP (máx. 5 MB) · Vídeo: MP4, WebM, MOV (máx. 100 MB)
-            </p>
-
-            {/* Manual URL input */}
-            <div className="mt-3">
-              <label className="form-label text-xs">O introduce una URL</label>
-              <input
-                className="input-field"
-                value={formS.imagen}
-                onChange={(e) => setFormS({ ...formS, imagen: e.target.value })}
-                placeholder="https://..."
-              />
-              {fieldErrors.imagen && (
-                <p className="text-xs text-red-500 mt-1 font-sans">{fieldErrors.imagen}</p>
-              )}
-            </div>
-
-            {/* Preview */}
-            {isValidMediaUrl(formS.imagen) && (
-              <div className="mt-3">
-                <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans mb-1">Vista previa</p>
-                <div className="w-full max-w-xs aspect-[4/3] overflow-hidden rounded-sm bg-ivory-100 border border-ivory-200">
-                  {isVideoUrl(formS.imagen) ? (
-                    <video
-                      src={formS.imagen}
-                      className="w-full h-full object-cover"
-                      muted
-                      controls
-                    />
-                  ) : (
-                    <img
-                      src={formS.imagen}
-                      alt="Vista previa"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                      }}
-                    />
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Multiple images section */}
-          <div>
-            <label className="form-label">Galería de imágenes y vídeos</label>
+            <label className="form-label">Imágenes y vídeos</label>
             <ImageUploader
               images={formS.imagenes}
               uploadFn={servicesApi.uploadImage}
@@ -419,6 +322,9 @@ export default function AdminServices() {
               acceptVideos={true}
               disabled={saving}
             />
+            <p className="text-xs text-charcoal-400 mt-1 font-sans">
+              La primera imagen será la imagen principal del servicio.
+            </p>
           </div>
 
           <div className="flex items-center gap-3">
