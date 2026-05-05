@@ -1,14 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { servicesApi } from '@services/services.api';
 import type { Servicio } from '@app-types/models';
-import ServiceDetailModal from '../components/ui/ServiceDetailModal';
 import SectionHeader from '../components/ui/SectionHeader';
 import LoadingSpinner from '../components/ui/LoadingSpinner';
+import { resolveImg, isVideoUrl } from '../utils/image';
 
 const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
-
-import { resolveImg, isVideoUrl } from '../utils/image';
 
 const fallbackServices: Servicio[] = [
   {
@@ -49,11 +47,146 @@ const fallbackServices: Servicio[] = [
   },
 ];
 
+// ── Inline image carousel ─────────────────────────────────────────────────────
+function ServiceCarousel({ servicio }: { servicio: Servicio }) {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [mediaErrors, setMediaErrors] = useState<Set<number>>(new Set());
+  const touchStartX = useRef(0);
+
+  // Build gallery: main image + imagenes array + block images
+  const gallery: string[] = [];
+  if (servicio.imagen) gallery.push(servicio.imagen);
+  (servicio.imagenes ?? []).forEach((url) => {
+    if (url !== servicio.imagen) gallery.push(url);
+  });
+  servicio.bloques.forEach((b) =>
+    (b.imagenes ?? []).forEach((url) => gallery.push(url))
+  );
+
+  const total      = gallery.length;
+  const multiMedia = total > 1;
+  const activeUrl  = gallery[activeIndex] ?? null;
+  const isVideo    = activeUrl ? isVideoUrl(activeUrl) : false;
+  const hasError   = mediaErrors.has(activeIndex);
+
+  const goPrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveIndex((i) => (i - 1 + total) % total);
+  };
+  const goNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setActiveIndex((i) => (i + 1) % total);
+  };
+  const goTo = (e: React.MouseEvent, i: number) => {
+    e.stopPropagation();
+    setActiveIndex(i);
+    setMediaErrors(new Set());
+  };
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    touchStartX.current = e.touches[0].clientX;
+  };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    const dx = e.changedTouches[0].clientX - touchStartX.current;
+    if (Math.abs(dx) > 50) {
+      dx < 0
+        ? setActiveIndex((i) => (i + 1) % total)
+        : setActiveIndex((i) => (i - 1 + total) % total);
+    }
+  };
+
+  const markError = () => setMediaErrors((prev) => new Set(prev).add(activeIndex));
+
+  return (
+    <div
+      className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm overflow-hidden relative select-none"
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
+    >
+      {activeUrl && !hasError ? (
+        isVideo ? (
+          <video
+            key={activeUrl}
+            src={resolveImg(activeUrl)}
+            className="absolute inset-0 w-full h-full object-cover"
+            muted
+            loop
+            autoPlay
+            playsInline
+            onError={markError}
+          />
+        ) : (
+          <img
+            key={activeUrl}
+            src={resolveImg(activeUrl)}
+            alt={servicio.titulo}
+            className="absolute inset-0 w-full h-full object-cover animate-fade-in"
+            draggable={false}
+            onError={markError}
+          />
+        )
+      ) : (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <svg className="w-16 h-16 text-sage-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+              d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
+          </svg>
+        </div>
+      )}
+
+      {/* Prev / Next arrows */}
+      {multiMedia && (
+        <>
+          <button
+            type="button"
+            onClick={goPrev}
+            aria-label="Imagen anterior"
+            className="absolute left-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/55 flex items-center justify-center text-white transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M11 4L6 9L11 14" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={goNext}
+            aria-label="Imagen siguiente"
+            className="absolute right-2 top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-black/30 hover:bg-black/55 flex items-center justify-center text-white transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M7 4L12 9L7 14" />
+            </svg>
+          </button>
+        </>
+      )}
+
+      {/* Dot indicators */}
+      {multiMedia && (
+        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex gap-1.5">
+          {gallery.map((_, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={(e) => goTo(e, i)}
+              aria-label={`Imagen ${i + 1}`}
+              className={`rounded-full transition-all duration-200 ${
+                i === activeIndex
+                  ? 'w-4 h-1.5 bg-white'
+                  : 'w-1.5 h-1.5 bg-white/50 hover:bg-white/80'
+              }`}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
 export default function Services() {
   const [services, setServices] = useState<Servicio[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
-  const [selected, setSelected] = useState<Servicio | null>(null);
 
   useEffect(() => {
     servicesApi.list()
@@ -102,47 +235,12 @@ export default function Services() {
               {services.map((servicio, idx) => (
                 <div
                   key={servicio.id}
-                  className={`grid lg:grid-cols-2 gap-12 items-start cursor-pointer group hover:opacity-95 transition-opacity ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}
-                  onClick={() => setSelected(servicio)}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => e.key === 'Enter' && setSelected(servicio)}
-                  aria-label={`Ver detalle de ${servicio.titulo}`}
+                  className={`grid lg:grid-cols-2 gap-12 items-start ${
+                    idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''
+                  }`}
                 >
-                  {/* Imagen/visual */}
-                  <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
-                    
-                    {/* Prioridad: imagen principal, luego primera imagen de galería, luego placeholder */}
-                    {(servicio.imagen || (servicio.imagenes && servicio.imagenes.length > 0)) ? (
-                      (() => {
-                        const imageSource = servicio.imagen || servicio.imagenes?.[0];
-                        return imageSource && (isVideoUrl(imageSource) ? (
-                          <video
-                            src={resolveImg(imageSource)}
-                            className="absolute inset-0 w-full h-full object-cover z-10"
-                            muted
-                            loop
-                            autoPlay
-                            playsInline
-                            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
-                          />
-                        ) : (
-                          <img
-                            src={resolveImg(imageSource)}
-                            alt={servicio.titulo}
-                            className="absolute inset-0 w-full h-full object-cover z-10"
-                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        ));
-                      })()
-                    ) : (
-                      <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
-                      </svg>
-                    )}
-                    
-                  </div>
+                  {/* Carrusel de imágenes inline */}
+                  <ServiceCarousel servicio={servicio} />
 
                   {/* Contenido */}
                   <div className="space-y-6">
@@ -171,12 +269,12 @@ export default function Services() {
                       </ul>
                     )}
 
-                    <button
-                      onClick={(e) => { e.stopPropagation(); setSelected(servicio); }}
+                    <Link
+                      to={`/reservations?service=${servicio.id}`}
                       className="btn-primary inline-block"
                     >
-                      Ver detalle
-                    </button>
+                      Solicitar este servicio
+                    </Link>
                   </div>
                 </div>
               ))}
@@ -199,8 +297,6 @@ export default function Services() {
           </Link>
         </div>
       </section>
-
-      <ServiceDetailModal servicio={selected} onClose={() => setSelected(null)} />
     </main>
   );
 }
