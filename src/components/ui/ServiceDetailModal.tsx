@@ -17,9 +17,12 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
 
   if (!servicio) return null;
 
-  // Build gallery: service main image + all block images
+  // Build gallery: service main image + service images + all block images
   const gallery: string[] = [];
   if (servicio.imagen) gallery.push(servicio.imagen);
+  if (servicio.imagenes && servicio.imagenes.length > 0) {
+    servicio.imagenes.forEach((url) => gallery.push(url));
+  }
   servicio.bloques.forEach((b) => {
     if (b.imagenes) b.imagenes.forEach((url) => gallery.push(url));
   });
