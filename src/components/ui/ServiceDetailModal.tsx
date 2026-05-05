@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import Modal from './Modal';
 import type { Servicio } from '@app-types/models';
@@ -38,35 +38,13 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
     }
   };
 
-  const navigateMedia = (direction: 'prev' | 'next') => {
-    if (gallery.length <= 1) return;
-    
-    const newIndex = direction === 'prev' 
-      ? (currentIndex - 1 + gallery.length) % gallery.length
-      : (currentIndex + 1) % gallery.length;
-    
-    setActiveMedia(gallery[newIndex]);
-    setMainError(false);
-  };
-
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowLeft') navigateMedia('prev');
-      if (e.key === 'ArrowRight') navigateMedia('next');
-      if (e.key === 'Escape') onClose();
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentIndex, gallery.length]);
-
+  
   return (
     <Modal isOpen size="xl" onClose={onClose} dismissOnBackdrop title={servicio.titulo}>
       <div className="grid lg:grid-cols-2 gap-8">
         {/* Left: Media Gallery */}
         <div className="space-y-4">
-          {/* Main media area with better proportions */}
+          {/* Main media area */}
           <div className="relative bg-gradient-to-br from-sage-50 to-ivory-100 rounded-lg overflow-hidden shadow-lg"
             style={{ aspectRatio: '16/12' }}
           >
@@ -91,37 +69,11 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
               )
             ) : (
               <div className="w-full h-full flex items-center justify-center">
-                <svg className="w-20 h-20 text-sage-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="w-16 h-16 text-sage-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5}
                     d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
                 </svg>
               </div>
-            )}
-
-            {/* Navigation arrows */}
-            {gallery.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => navigateMedia('prev')}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all text-charcoal-700 z-10"
-                  aria-label="Imagen anterior"
-                >
-                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => navigateMedia('next')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center transition-all text-charcoal-700 z-10"
-                  aria-label="Siguiente imagen"
-                >
-                  <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </>
             )}
 
             {/* Close button */}
@@ -144,7 +96,7 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
             )}
           </div>
 
-          {/* Thumbnail gallery - improved layout */}
+          {/* Thumbnail gallery */}
           {gallery.length > 1 && (
             <div className="grid grid-cols-6 gap-2">
               {gallery.map((url, i) => {
