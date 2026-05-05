@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import HeroSection from '../components/ui/HeroSection';
-import SectionHeader from '../components/ui/SectionHeader';
 import ServiceCard, { type ServiceCardData } from '../components/ui/ServiceCard';
 import ReviewCard from '../components/ui/ReviewCard';
 import { servicesApi } from '@services/services.api';
@@ -87,38 +86,84 @@ export default function Home(): JSX.Element {
         ctaSecondary={{ label: 'Ver servicios', href: '/services' }}
       />
 
-      {/* Quién soy */}
+      {/* Quién soy - más visual y compacto */}
       <section className="section bg-ivory-50">
-        <div className="container-page grid gap-12 lg:grid-cols-2 lg:items-center">
-          <div className="aspect-square w-full rounded-2xl bg-sage-100 shadow-sm" aria-hidden />
-          <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-sage-600 mb-4">Quién soy</p>
-            <h2 className="mb-6">Ana Castellano</h2>
-            <p className="text-charcoal-700 mb-4">
-              Soy florista por vocación y artesana del detalle. Llevo más de una década dando forma a
-              historias a través de las flores: desde bodas íntimas en el campo hasta grandes
-              celebraciones corporativas.
-            </p>
-            <p className="text-charcoal-700 mb-8">
-              Cada proyecto comienza con una conversación. Escuchar lo que sueñas es el primer paso
-              para componer algo que solo pueda ser tuyo.
-            </p>
-            <Link to="/about" className="btn-ghost">
-              Conoce mi historia
-            </Link>
+        <div className="container-page">
+          <div className="grid lg:grid-cols-2 gap-8 items-center">
+            <div className="relative">
+              <div className="aspect-[4/3] rounded-2xl bg-gradient-to-br from-sage-200 to-ivory-200 shadow-lg flex items-center justify-center">
+                <svg className="w-24 h-24 text-sage-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+              </div>
+              {/* Elementos decorativos */}
+              <div className="absolute -top-4 -right-4 w-20 h-20 bg-gold-200 rounded-full opacity-50" />
+              <div className="absolute -bottom-4 -left-4 w-16 h-16 bg-blush-200 rounded-full opacity-50" />
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <span className="inline-block px-3 py-1 bg-sage-100 text-sage-700 text-xs font-medium rounded-full mb-3">
+                  Quién soy
+                </span>
+                <h2 className="font-serif text-3xl text-charcoal-800">Ana Castellano</h2>
+              </div>
+              
+              <div className="space-y-3">
+                <p className="text-charcoal-600 leading-relaxed">
+                  Florista por vocación con más de una década creando historias únicas a través de flores artesanales.
+                </p>
+                <p className="text-charcoal-600 leading-relaxed">
+                  Cada diseño comienza escuchando tus sueños para transformarlos en realidad floral.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3 pt-2">
+                <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm">
+                  <svg className="w-5 h-5 text-gold-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-charcoal-700">10+ años</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm">
+                  <svg className="w-5 h-5 text-sage-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-charcoal-700">Arte floral</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-2 bg-white rounded-lg shadow-sm">
+                  <svg className="w-5 h-5 text-blush-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                  </svg>
+                  <span className="text-sm font-medium text-charcoal-700">Diseño único</span>
+                </div>
+              </div>
+
+              <Link to="/about" className="btn-primary inline-flex items-center gap-2">
+                Conoce mi historia
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Servicios destacados */}
-      <section className="section bg-ivory-100">
+      {/* Servicios destacados - más compacto */}
+      <section className="section bg-white">
         <div className="container-page">
-          <SectionHeader
-            eyebrow="Mis Servicios"
-            title="Arte floral para cada momento"
-            centered
-          />
-          <div className="grid gap-6 sm:grid-cols-2 mt-12">
+          <div className="text-center mb-8">
+            <span className="inline-block px-3 py-1 bg-gold-100 text-gold-700 text-xs font-medium rounded-full mb-3">
+              Mis Servicios
+            </span>
+            <h2 className="font-serif text-3xl text-charcoal-800 mb-3">Arte floral para cada momento</h2>
+            <p className="text-charcoal-600 max-w-2xl mx-auto">
+              Diseños únicos que transforman tus eventos en experiencias inolvidables
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             {featuredServices.map((service, idx) => (
               <ServiceCard
                 key={service.id || `fallback-${idx}`}
@@ -126,23 +171,29 @@ export default function Home(): JSX.Element {
               />
             ))}
           </div>
-          <div className="text-center mt-12">
+          
+          <div className="text-center">
             <Link to="/services" className="btn-primary">
-              Ver todos los servicios
+              Explorar todos los servicios
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Testimonios */}
-      <section className="section bg-ivory-100">
+      {/* Testimonios - más compacto */}
+      <section className="section bg-ivory-50">
         <div className="container-page">
-          <SectionHeader
-            eyebrow="Testimonios"
-            title="Lo que dicen quienes ya confiaron en mí"
-            centered
-          />
-          <div className="grid gap-6 md:grid-cols-3 mt-12">
+          <div className="text-center mb-8">
+            <span className="inline-block px-3 py-1 bg-sage-100 text-sage-700 text-xs font-medium rounded-full mb-3">
+              Testimonios
+            </span>
+            <h2 className="font-serif text-3xl text-charcoal-800 mb-3">Historias de felicidad floral</h2>
+            <p className="text-charcoal-600 max-w-2xl mx-auto">
+              Las palabras de quienes confiaron en mi arte para sus momentos más especiales
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-6 mb-8">
             {testimonials.map((review) => (
               <ReviewCard
                 key={review.id}
