@@ -8,7 +8,7 @@ import { useToast } from '../../hooks/useToast';
 import ImageUploader from '../../components/ui/ImageUploader';
 import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
-type ModalMode = 'createService' | 'editService' | 'manageBlocks' | null;
+type ModalMode = 'createService' | 'editService' | 'manageBlocks' | 'setMainImage' | null;
 
 interface FieldErrors {
   titulo?: string;
@@ -29,7 +29,6 @@ export default function AdminServices() {
   const [selected, setSelected] = useState<Servicio | null>(null);
   const [saving, setSaving] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [imgError, setImgError] = useState<Record<string, boolean>>({});
   const [blockSaving, setBlockSaving] = useState<Record<string, boolean>>({});
 
   const [formS, setFormS] = useState({
@@ -157,6 +156,27 @@ export default function AdminServices() {
     }
   };
 
+  const setMainImage = async (id: string, imageIndex: number) => {
+    try {
+      const service = services.find(s => s.id === id);
+      if (!service || !service.imagenes || service.imagenes.length <= imageIndex) return;
+      
+      // Mover la imagen seleccionada al principio del array
+      const newImages = [...service.imagenes];
+      const [selectedImage] = newImages.splice(imageIndex, 1);
+      newImages.unshift(selectedImage);
+      
+      await servicesApi.update(id, { 
+        imagen: newImages[0] ?? null,
+        imagenes: newImages 
+      });
+      success('Imagen principal actualizada');
+      fetchServices();
+    } catch {
+      toastError('Error al cambiar imagen principal');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
@@ -183,8 +203,34 @@ export default function AdminServices() {
           {services.map((s) => (
             <div key={s.id} className="bg-white rounded-sm border border-ivory-200 p-4 sm:p-6">
               <div className="flex items-start gap-4">
-                {/* Thumbnail — imagen o vídeo */}
-                {s.imagen && !imgError[s.id] ? (
+                {/* Thumbnail — galería de imágenes */}
+                {(s.imagenes && s.imagenes.length > 0) ? (
+                  <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100 relative group cursor-pointer"
+                       onClick={() => setSelected(s)}
+                       title="Ver todas las imágenes">
+                    {isVideoUrl(s.imagenes[0]) ? (
+                      <video
+                        src={resolveMedia(s.imagenes[0])}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
+                      />
+                    ) : (
+                      <img
+                        src={resolveMedia(s.imagenes[0])}
+                        className="w-full h-full object-cover"
+                        alt={s.titulo}
+                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
+                      />
+                    )}
+                    {s.imagenes.length > 1 && (
+                      <div className="absolute top-1 right-1 bg-black/60 text-white text-xs px-1.5 py-0.5 rounded">
+                        +{s.imagenes.length - 1}
+                      </div>
+                    )}
+                  </div>
+                ) : s.imagen ? (
                   <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 overflow-hidden rounded-sm bg-ivory-100">
                     {isVideoUrl(s.imagen) ? (
                       <video
@@ -203,11 +249,11 @@ export default function AdminServices() {
                       />
                     )}
                   </div>
-                ) : s.imagen ? (
+                ) : (
                   <div className="w-20 sm:w-24 aspect-[4/3] flex-shrink-0 rounded-sm bg-ivory-100 flex items-center justify-center text-charcoal-300 text-xs font-sans">
                     <span aria-label="Imagen no disponible">—</span>
                   </div>
-                ) : null}
+                )}
 
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-2 mb-1">
@@ -251,6 +297,17 @@ export default function AdminServices() {
                 >
                   Eliminar
                 </button>
+                {(s.imagenes && s.imagenes.length > 1) && (
+                  <button
+                    onClick={() => {
+                      setSelected(s);
+                      setModal('setMainImage');
+                    }}
+                    className="text-xs px-3 py-1.5 rounded border border-sage-200 text-sage-600 hover:bg-sage-50 transition-colors font-sans"
+                  >
+                    Cambiar imagen principal
+                  </button>
+                )}
               </div>
 
               {s.bloques.length > 0 && (
@@ -323,7 +380,7 @@ export default function AdminServices() {
               disabled={saving}
             />
             <p className="text-xs text-charcoal-400 mt-1 font-sans">
-              La primera imagen será la imagen principal del servicio.
+              <strong>Nota:</strong> Se mostrará la primera imagen como principal. Para ver todas las imágenes, necesitas aplicar la migración de la base de datos.
             </p>
           </div>
 
@@ -469,6 +526,64 @@ export default function AdminServices() {
                 }}
               >
                 Añadir bloque
+              </button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal para cambiar imagen principal */}
+      <Modal
+        isOpen={modal === 'setMainImage'}
+        onClose={() => setModal(null)}
+        title="Cambiar imagen principal"
+        dismissOnBackdrop={false}
+      >
+        {selected && (
+          <div className="space-y-4">
+            <p className="text-sm text-charcoal-600 mb-4">
+              Selecciona qué imagen será la principal del servicio.
+            </p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {selected.imagenes?.map((img, index) => (
+                <button
+                  key={index}
+                  onClick={() => setMainImage(selected.id, index)}
+                  className={`relative aspect-square rounded-sm overflow-hidden border-2 transition-all ${
+                    index === 0 
+                      ? 'border-sage-400 ring-2 ring-sage-400' 
+                      : 'border-ivory-200 hover:border-sage-300'
+                  }`}
+                >
+                  <div className="relative w-full h-full">
+                    {isVideoUrl(img) ? (
+                      <video
+                        src={resolveMedia(img)}
+                        className="w-full h-full object-cover"
+                        muted
+                        preload="metadata"
+                      />
+                    ) : (
+                      <img
+                        src={resolveMedia(img)}
+                        alt={`Imagen ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
+                    {index === 0 && (
+                      <div className="absolute top-1 left-1 bg-sage-600 text-white text-xs px-1.5 py-0.5 rounded">
+                        Principal
+                      </div>
+                    )}
+                  </div>
+                ))}
+            </div>
+            <div className="flex gap-3 pt-4">
+              <button
+                onClick={() => setModal(null)}
+                className="btn-secondary flex-1"
+              >
+                Cancelar
               </button>
             </div>
           </div>
