@@ -98,151 +98,88 @@ export default function Services() {
               <LoadingSpinner size="lg" />
             </div>
           ) : (
-            <div className="mt-8">
-              {/* Grid visual de servicios */}
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {services.map((servicio) => (
-                  <div
-                    key={servicio.id}
-                    className="group cursor-pointer bg-white rounded-lg shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden"
-                    onClick={() => setSelected(servicio)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={(e) => e.key === 'Enter' && setSelected(servicio)}
-                    aria-label={`Ver detalle de ${servicio.titulo}`}
-                  >
-                    {/* Imagen principal */}
-                    <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 overflow-hidden relative">
-                      {(() => {
+            <div className="mt-16 space-y-24">
+              {services.map((servicio, idx) => (
+                <div
+                  key={servicio.id}
+                  className={`grid lg:grid-cols-2 gap-12 items-start cursor-pointer group hover:opacity-95 transition-opacity ${idx % 2 === 1 ? 'lg:[&>*:first-child]:order-2' : ''}`}
+                  onClick={() => setSelected(servicio)}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => e.key === 'Enter' && setSelected(servicio)}
+                  aria-label={`Ver detalle de ${servicio.titulo}`}
+                >
+                  {/* Imagen/visual */}
+                  <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
+                    
+                    {/* Prioridad: imagen principal, luego primera imagen de galería, luego placeholder */}
+                    {(servicio.imagen || (servicio.imagenes && servicio.imagenes.length > 0)) ? (
+                      (() => {
                         const imageSource = servicio.imagen || servicio.imagenes?.[0];
-                        if (!imageSource) {
-                          return (
-                            <div className="w-full h-full flex items-center justify-center">
-                              <svg className="w-12 h-12 text-sage-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                                  d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
-                              </svg>
-                            </div>
-                          );
-                        }
-                        
-                        if (isVideoUrl(imageSource)) {
-                          return (
-                            <video
-                              src={resolveImg(imageSource)}
-                              className="w-full h-full object-cover"
-                              muted
-                              loop
-                              autoPlay
-                              playsInline
-                              onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
-                            />
-                          );
-                        }
-                        
-                        return (
+                        return imageSource && (isVideoUrl(imageSource) ? (
+                          <video
+                            src={resolveImg(imageSource)}
+                            className="absolute inset-0 w-full h-full object-cover z-10"
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
+                          />
+                        ) : (
                           <img
                             src={resolveImg(imageSource)}
                             alt={servicio.titulo}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            className="absolute inset-0 w-full h-full object-cover z-10"
                             onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
                           />
-                        );
-                      })()}
-
-                      {/* Indicador de múltiples imágenes */}
-                      {servicio.imagenes && servicio.imagenes.length > 1 && (
-                        <div className="absolute top-2 right-2 bg-black/60 text-white text-xs px-2 py-1 rounded-full">
-                          +{servicio.imagenes.length - 1}
-                        </div>
-                      )}
-
-                      {/* Overlay en hover */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                    </div>
-
-                    {/* Contenido compacto */}
-                    <div className="p-4 space-y-3">
-                      <div className="flex items-start justify-between gap-3">
-                        <div className="flex-1 min-w-0">
-                          <span className="text-gold-500 font-sans text-xs uppercase tracking-widest block">
-                            {String(servicio.orden).padStart(2, '0')}
-                          </span>
-                          <h3 className="font-serif text-lg text-charcoal-800 mt-1 truncate">{servicio.titulo}</h3>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium bg-sage-100 text-sage-700 rounded-full">
-                            {servicio.bloques.length} {servicio.bloques.length === 1 ? 'bloque' : 'bloques'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Tags visuales de los bloques */}
-                      {servicio.bloques.length > 0 && (
-                        <div className="flex flex-wrap gap-1">
-                          {servicio.bloques.slice(0, 3).map((bloque) => (
-                            <span key={bloque.id} className="inline-block px-2 py-1 text-xs bg-ivory-100 text-charcoal-600 rounded">
-                              {bloque.titulo}
-                            </span>
-                          ))}
-                          {servicio.bloques.length > 3 && (
-                            <span className="inline-block px-2 py-1 text-xs bg-charcoal-100 text-charcoal-500 rounded">
-                              +{servicio.bloques.length - 3} más
-                            </span>
-                          )}
-                        </div>
-                      )}
-
-                      <button
-                        onClick={(e) => { e.stopPropagation(); setSelected(servicio); }}
-                        className="w-full btn-primary text-sm py-2"
-                      >
-                        Ver detalles
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Sección de características visuales */}
-              <div className="mt-16 bg-ivory-50 rounded-xl p-8">
-                <div className="text-center mb-8">
-                  <h2 className="font-serif text-2xl text-charcoal-800 mb-2">Servicios Florales Premium</h2>
-                  <p className="text-charcoal-600">Diseño único para cada momento especial</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-gold-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-gold-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+                        ));
+                      })()
+                    ) : (
+                      <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                          d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />
                       </svg>
-                    </div>
-                    <h3 className="font-serif text-lg text-charcoal-800 mb-2">Personalización</h3>
-                    <p className="text-charcoal-600 text-sm">Cada diseño adaptado a tu estilo y visión única</p>
+                    )}
+                    
                   </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-sage-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-sage-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+
+                  {/* Contenido */}
+                  <div className="space-y-6">
+                    <div>
+                      <span className="text-gold-500 font-sans text-sm uppercase tracking-widest">
+                        {String(servicio.orden).padStart(2, '0')}
+                      </span>
+                      <h2 className="font-serif text-3xl text-charcoal-800 mt-1">{servicio.titulo}</h2>
+                      <div className="divider-gold mt-3" />
                     </div>
-                    <h3 className="font-serif text-lg text-charcoal-800 mb-2">Calidad</h3>
-                    <p className="text-charcoal-600 text-sm">Flores frescas seleccionadas con esmero</p>
-                  </div>
-                  
-                  <div className="text-center">
-                    <div className="w-16 h-16 bg-blush-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <svg className="w-8 h-8 text-blush-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                      </svg>
-                    </div>
-                    <h3 className="font-serif text-lg text-charcoal-800 mb-2">Pasión</h3>
-                    <p className="text-charcoal-600 text-sm">Dedicación y amor en cada detalle floral</p>
+                    <p className="text-charcoal-600 leading-relaxed">{servicio.descripcion}</p>
+
+                    {servicio.bloques.length > 0 && (
+                      <ul className="space-y-3">
+                        {servicio.bloques.map((bloque) => (
+                          <li key={bloque.id} className="flex gap-3">
+                            <span className="w-1.5 h-1.5 rounded-full bg-sage-400 mt-2 flex-shrink-0" />
+                            <div>
+                              <span className="font-sans font-medium text-charcoal-700">{bloque.titulo}</span>
+                              {bloque.descripcion && (
+                                <span className="text-charcoal-500 text-sm"> — {bloque.descripcion}</span>
+                              )}
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); setSelected(servicio); }}
+                      className="btn-primary inline-block"
+                    >
+                      Ver detalle
+                    </button>
                   </div>
                 </div>
-              </div>
+              ))}
             </div>
           )}
         </div>
