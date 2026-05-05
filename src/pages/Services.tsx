@@ -8,16 +8,7 @@ import LoadingSpinner from '../components/ui/LoadingSpinner';
 
 const FALLBACK_DATE = '2024-01-01T00:00:00.000Z';
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-
-const resolveImageSrc = (src: string): string =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+import { resolveImg, isVideoUrl } from '../utils/image';
 
 const fallbackServices: Servicio[] = [
   {
@@ -121,30 +112,30 @@ export default function Services() {
                   {/* Imagen/visual */}
                   <div className="aspect-[4/3] bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm flex items-center justify-center overflow-hidden relative">
                     
-                    {/* Si HAY imagen o vídeo, muéstral@ */}
-                    {servicio.imagen && (
-                      isVideoUrl(servicio.imagen) ? (
-                        <video
-                          src={resolveImageSrc(servicio.imagen)}
-                          className="absolute inset-0 w-full h-full object-cover z-10"
-                          muted
-                          loop
-                          autoPlay
-                          playsInline
-                          onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
-                        />
-                      ) : (
-                        <img
-                          src={resolveImageSrc(servicio.imagen)}
-                          alt={servicio.titulo}
-                          className="absolute inset-0 w-full h-full object-cover z-10"
-                          onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                        />
-                      )
-                    )}
-
-                    {/* Si NO hay imagen, muestra el placeholder */}
-                    {!servicio.imagen && (
+                    {/* Prioridad: imagen principal, luego primera imagen de galería, luego placeholder */}
+                    {(servicio.imagen || (servicio.imagenes && servicio.imagenes.length > 0)) ? (
+                      (() => {
+                        const imageSource = servicio.imagen || servicio.imagenes?.[0];
+                        return imageSource && (isVideoUrl(imageSource) ? (
+                          <video
+                            src={resolveImg(imageSource)}
+                            className="absolute inset-0 w-full h-full object-cover z-10"
+                            muted
+                            loop
+                            autoPlay
+                            playsInline
+                            onError={(e) => { (e.currentTarget as HTMLVideoElement).style.display = 'none'; }}
+                          />
+                        ) : (
+                          <img
+                            src={resolveImg(imageSource)}
+                            alt={servicio.titulo}
+                            className="absolute inset-0 w-full h-full object-cover z-10"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                          />
+                        ));
+                      })()
+                    ) : (
                       <svg className="w-16 h-16 text-sage-200 relative z-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
                           d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909" />

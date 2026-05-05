@@ -6,15 +6,7 @@ import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
 import ImageUploader from '../../components/ui/ImageUploader';
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-const resolveMedia = (src: string) =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
 type ModalMode = 'createCurso' | 'editCurso' | null;
 
@@ -154,7 +146,7 @@ export default function AdminCursos() {
     const payload = {
       titulo: form.titulo,
       descripcion: form.descripcion,
-      imagen: form.imagenes[0] ?? (form.imagen.trim() || null),
+      imagen: form.imagenes[0] ?? null,
       imagenes: form.imagenes.length > 0 ? form.imagenes : undefined,
       precio: precioValue,
       duracion: form.duracion.trim() || null,

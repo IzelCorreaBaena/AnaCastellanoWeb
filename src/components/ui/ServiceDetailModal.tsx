@@ -8,15 +8,7 @@ interface Props {
   onClose: () => void;
 }
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-const resolveMedia = (src: string) =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
 export default function ServiceDetailModal({ servicio, onClose }: Props) {
   const [activeMedia, setActiveMedia] = useState<string | null>(null);
@@ -43,7 +35,7 @@ export default function ServiceDetailModal({ servicio, onClose }: Props) {
   };
 
   return (
-    <Modal isOpen size="lg" onClose={onClose} dismissOnBackdrop>
+    <Modal isOpen size="lg" onClose={onClose} dismissOnBackdrop title={servicio.titulo}>
       {/* Main media area */}
       <div className="relative bg-gradient-to-br from-sage-50 to-ivory-100 rounded-sm overflow-hidden -mx-6 -mt-6 mb-4"
         style={{ aspectRatio: '4/3' }}

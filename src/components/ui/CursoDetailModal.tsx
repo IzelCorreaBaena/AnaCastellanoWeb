@@ -8,15 +8,7 @@ interface Props {
   onClose: () => void;
 }
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-const resolveMedia = (src: string) =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
 const formatPrecio = (precio: number) =>
   new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(precio);

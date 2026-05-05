@@ -6,6 +6,7 @@ import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
 import { useToast } from '../../hooks/useToast';
 import ImageUploader from '../../components/ui/ImageUploader';
+import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
 type ModalMode = 'createService' | 'editService' | 'manageBlocks' | null;
 
@@ -20,16 +21,6 @@ interface FieldErrors {
 const MAX_TITULO = 150;
 const MAX_DESCRIPCION = 5000;
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-const resolveMedia = (src: string) =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
-
 export default function AdminServices() {
   const { success, error: toastError } = useToast();
   const [services, setServices] = useState<Servicio[]>([]);
@@ -40,12 +31,14 @@ export default function AdminServices() {
   const [uploading, setUploading] = useState(false);
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [imgError, setImgError] = useState<Record<string, boolean>>({});
+  const [blockSaving, setBlockSaving] = useState<Record<number, boolean>>({});
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const [formS, setFormS] = useState({
     titulo: '',
     descripcion: '',
     imagen: '',
+    imagenes: [] as string[],
     activo: true,
     orden: 1,
   });
@@ -62,7 +55,7 @@ export default function AdminServices() {
   useEffect(() => { fetchServices(); }, []);
 
   const resetForm = () => {
-    setFormS({ titulo: '', descripcion: '', imagen: '', activo: true, orden: 1 });
+    setFormS({ titulo: '', descripcion: '', imagen: '', imagenes: [], activo: true, orden: 1 });
     setFieldErrors({});
   };
 
@@ -77,6 +70,7 @@ export default function AdminServices() {
       titulo: s.titulo,
       descripcion: s.descripcion,
       imagen: s.imagen ?? '',
+      imagenes: s.imagenes ?? [],
       activo: s.activo,
       orden: s.orden ?? 1,
     });
@@ -106,9 +100,19 @@ export default function AdminServices() {
     return out;
   };
 
+  const ALLOWED_SERVICE_MIME = new Set([
+    'image/jpeg', 'image/png', 'image/webp',
+    'video/mp4', 'video/webm', 'video/quicktime',
+  ]);
+
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    if (!ALLOWED_SERVICE_MIME.has(file.type)) {
+      toastError('Tipo de archivo no permitido. Solo JPEG, PNG, WebP, MP4, WebM, MOV.');
+      if (fileInputRef.current) fileInputRef.current.value = '';
+      return;
+    }
     setUploading(true);
     try {
       const { url } = await servicesApi.uploadImage(file);
@@ -131,6 +135,7 @@ export default function AdminServices() {
       titulo: formS.titulo,
       descripcion: formS.descripcion,
       imagen: formS.imagen.trim() || null,
+      imagenes: formS.imagenes,
       activo: formS.activo,
       orden: formS.orden,
     };
@@ -403,6 +408,19 @@ export default function AdminServices() {
             )}
           </div>
 
+          {/* Multiple images section */}
+          <div>
+            <label className="form-label">Galería de imágenes y vídeos</label>
+            <ImageUploader
+              images={formS.imagenes}
+              uploadFn={servicesApi.uploadImage}
+              onChange={(newImages) => setFormS({ ...formS, imagenes: newImages })}
+              maxImages={10}
+              acceptVideos={true}
+              disabled={saving}
+            />
+          </div>
+
           <div className="flex items-center gap-3">
             <input
               id="activo-toggle"
@@ -484,14 +502,17 @@ export default function AdminServices() {
                       <ImageUploader
                         images={b.imagenes ?? []}
                         uploadFn={servicesApi.uploadImage}
+                        disabled={!!blockSaving[b.id]}
                         onChange={async (newImages) => {
+                          setBlockSaving(prev => ({ ...prev, [b.id]: true }));
                           try {
                             await blocksApi.update(b.id, { imagenes: newImages });
                             const updated = await servicesApi.get(selected!.id);
                             setSelected(updated);
-                            fetchServices();
                           } catch {
                             toastError('Error al actualizar los archivos del bloque');
+                          } finally {
+                            setBlockSaving(prev => ({ ...prev, [b.id]: false }));
                           }
                         }}
                       />

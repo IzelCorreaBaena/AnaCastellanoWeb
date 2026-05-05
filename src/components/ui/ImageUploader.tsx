@@ -1,18 +1,19 @@
 import { useRef, useState } from 'react';
 
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-
-const resolveMedia = (src: string) =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
+import { resolveImg as resolveMedia, isVideoUrl } from '../../utils/image';
 
 const ACCEPT_ALL = 'image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime';
 const ACCEPT_IMAGES = 'image/jpeg,image/png,image/webp';
+
+const ALLOWED_MIME_ALL = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'video/mp4',
+  'video/webm',
+  'video/quicktime',
+]);
+const ALLOWED_MIME_IMAGES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 interface ImageUploaderProps {
   images: string[];
@@ -20,6 +21,7 @@ interface ImageUploaderProps {
   uploadFn: (file: File) => Promise<{ url: string }>;
   maxImages?: number;
   acceptVideos?: boolean;
+  disabled?: boolean;
 }
 
 export default function ImageUploader({
@@ -28,6 +30,7 @@ export default function ImageUploader({
   uploadFn,
   maxImages = 10,
   acceptVideos = true,
+  disabled = false,
 }: ImageUploaderProps) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<string | null>(null);
@@ -38,11 +41,31 @@ export default function ImageUploader({
     const files = Array.from(e.target.files ?? []);
     if (!files.length) return;
 
+    const allowedMime = acceptVideos ? ALLOWED_MIME_ALL : ALLOWED_MIME_IMAGES;
+    const invalid = files.filter((f) => !allowedMime.has(f.type));
+    if (invalid.length > 0) {
+      setUploadError('Tipo de archivo no permitido. Solo se aceptan imágenes JPEG, PNG, WebP' + (acceptVideos ? ' y vídeos MP4, WebM, MOV.' : '.'));
+      if (inputRef.current) inputRef.current.value = '';
+      return;
+    }
+
     const remaining = maxImages - images.length;
     const toUpload = files.slice(0, remaining);
 
     setUploading(true);
     setUploadError(null);
+
+    const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+    const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100 MB
+    for (const file of toUpload) {
+      const limit = file.type.startsWith('video/') ? MAX_VIDEO_SIZE : MAX_IMAGE_SIZE;
+      if (file.size > limit) {
+        setUploadError(`El archivo "${file.name}" supera el límite permitido.`);
+        setUploading(false);
+        if (inputRef.current) inputRef.current.value = '';
+        return;
+      }
+    }
 
     const newUrls: string[] = [];
     for (let i = 0; i < toUpload.length; i++) {
@@ -132,7 +155,7 @@ export default function ImageUploader({
         </div>
       )}
 
-      {images.length < maxImages && (
+      {images.length < maxImages && !disabled && (
         <label className="inline-flex items-center gap-2 cursor-pointer">
           <input
             ref={inputRef}
@@ -140,7 +163,7 @@ export default function ImageUploader({
             accept={accept}
             multiple
             onChange={handleFiles}
-            disabled={uploading}
+            disabled={uploading || disabled}
             className="sr-only"
           />
           <span

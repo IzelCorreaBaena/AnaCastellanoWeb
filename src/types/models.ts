@@ -17,6 +17,7 @@ export interface Servicio {
   readonly titulo: string;
   readonly descripcion: string;
   readonly imagen?: string | null;
+  readonly imagenes?: string[];
   readonly orden: number;
   readonly activo: boolean;
   readonly bloques: Bloque[];
@@ -72,12 +73,14 @@ export interface CreateServicioPayload {
   titulo: string;
   descripcion: string;
   imagen?: string | null;
+  imagenes?: string[];
 }
 
 export interface UpdateServicioPayload {
   titulo?: string;
   descripcion?: string;
   imagen?: string | null;
+  imagenes?: string[];
   orden?: number;
   activo?: boolean;
 }
