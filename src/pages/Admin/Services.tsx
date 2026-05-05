@@ -214,14 +214,12 @@ export default function AdminServices() {
                         className="w-full h-full object-cover"
                         muted
                         preload="metadata"
-                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
                       />
                     ) : (
                       <img
                         src={resolveMedia(s.imagenes[0])}
                         className="w-full h-full object-cover"
                         alt={s.titulo}
-                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
                       />
                     )}
                     {s.imagenes.length > 1 && (
@@ -238,14 +236,12 @@ export default function AdminServices() {
                         className="w-full h-full object-cover"
                         muted
                         preload="metadata"
-                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
                       />
                     ) : (
                       <img
                         src={resolveMedia(s.imagen)}
                         className="w-full h-full object-cover"
                         alt={s.titulo}
-                        onError={() => setImgError((prev) => ({ ...prev, [s.id]: true }))}
                       />
                     )}
                   </div>
@@ -576,7 +572,8 @@ export default function AdminServices() {
                       </div>
                     )}
                   </div>
-                ))}
+                </button>
+              ))}
             </div>
             <div className="flex gap-3 pt-4">
               <button
