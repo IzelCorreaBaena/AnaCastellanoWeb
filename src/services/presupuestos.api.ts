@@ -11,13 +11,14 @@ export interface CreatePresupuestoInput {
   clienteNombre: string;
   clienteEmail?: string;
   clienteTelefono?: string;
+  nombreEvento?: string;
+  fechaEvento?: string;
+  ubicacion?: string;
+  anticipo?: number;
+  imagenes?: string[];
   items: PresupuestoItemInput[];
   igicPorcentaje?: number;
   notas?: string;
-  nombreEvento?: string;
-  fechaEvento?: string;
-  anticipo?: number;
-  imagenes?: string[];
 }
 
 export const presupuestosApi = {

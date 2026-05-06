@@ -163,6 +163,7 @@ model Presupuesto {
   clienteTelefono String?  @db.VarChar(25)  @map("cliente_telefono")
   nombreEvento    String?  @db.VarChar(200) @map("nombre_evento")
   fechaEvento     DateTime? @map("fecha_evento") @db.Date
+  ubicacion       String?  @db.VarChar(200)
   anticipo        Decimal? @db.Decimal(10,2)
   imagenes        String[] @default([])
   items           Json

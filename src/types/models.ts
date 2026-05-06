@@ -202,6 +202,11 @@ export interface Presupuesto {
   clienteNombre: string;
   clienteEmail?: string | null;
   clienteTelefono?: string | null;
+  nombreEvento?: string | null;
+  fechaEvento?: string | null;
+  ubicacion?: string | null;
+  anticipo?: number | null;
+  imagenes?: string[];
   items: PresupuestoItem[];
   subtotal: number;
   igicPorcentaje: number;
