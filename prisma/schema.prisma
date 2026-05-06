@@ -161,6 +161,10 @@ model Presupuesto {
   clienteNombre   String   @db.VarChar(150) @map("cliente_nombre")
   clienteEmail    String?  @db.VarChar(255) @map("cliente_email")
   clienteTelefono String?  @db.VarChar(25)  @map("cliente_telefono")
+  nombreEvento    String?  @db.VarChar(200) @map("nombre_evento")
+  fechaEvento     DateTime? @map("fecha_evento") @db.Date
+  anticipo        Decimal? @db.Decimal(10,2)
+  imagenes        String[] @default([])
   items           Json
   subtotal        Decimal  @db.Decimal(10,2)
   igicPorcentaje  Decimal  @db.Decimal(5,2) @map("igic_porcentaje")

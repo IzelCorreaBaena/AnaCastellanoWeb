@@ -388,6 +388,7 @@ export default function AdminCursos() {
               images={form.imagenes}
               onChange={(newImages) => setForm({ ...form, imagenes: newImages })}
               uploadFn={cursosApi.uploadImage}
+              disabled={saving}
             />
             <p className="text-xs text-charcoal-400 mt-1 font-sans">
               La primera imagen será la imagen principal del curso.

@@ -6,7 +6,12 @@
       "mcp__plugin_claude-mem_mcp-search__smart_outline",
       "Bash(node:*)",
       "WebFetch(domain:api.anthropic.com)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(ls:*)",
+      "Bash(npx prisma:*)",
+      "Bash(grep -n \"uploadImage\\\\|uploads/image\\\\|multer\\\\|upload\" \"C:/Users/Izel/Documents/AnaCastellanoWeb/lib/routes\"/*.ts)"
     ]
   }
 }

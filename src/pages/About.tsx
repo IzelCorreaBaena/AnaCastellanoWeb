@@ -78,14 +78,24 @@ export default function About() {
       <section className="section bg-white">
         <div className="container-content">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center">
-            <div className="aspect-[4/5] bg-sage-100 rounded-sm flex items-center justify-center">
-              <svg className="w-20 h-20 text-sage-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
-                  d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
+            <div className="relative">
+              <div className="aspect-floral bg-sage-100 rounded-sm overflow-hidden flex items-center justify-center">
+                <svg className="w-20 h-20 text-sage-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1}
+                    d="M15.182 15.182a4.5 4.5 0 01-6.364 0M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <div className="absolute -top-3 -right-3 w-24 h-24 rounded-sm border border-gold-200 -z-10" aria-hidden />
+              <div className="absolute -bottom-3 -left-3 w-20 h-20 bg-ivory-200 rounded-sm -z-10" aria-hidden />
             </div>
             <div className="space-y-6">
-              <SectionHeader eyebrow="Sobre mí" title="Veinte años rodeada de flores" />
+              <div>
+                <span className="section-header__eyebrow">Sobre mí</span>
+                <span className="title-ornament" />
+                <h2 className="font-serif text-4xl lg:text-5xl text-charcoal-900 leading-tight">
+                  Veinte años rodeada de flores
+                </h2>
+              </div>
               <p className="text-charcoal-700 leading-relaxed">
                 Crecí entre jardines y mercados de flores. Mi abuela me enseñó que cada flor tiene una historia
                 que contar, y desde entonces no he parado de escucharlas. Estudié diseño floral en Madrid y me
@@ -116,7 +126,7 @@ export default function About() {
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {reasons.map((r) => (
               <div key={r.titulo} className="text-center space-y-4 group">
-                <div className="w-16 h-16 mx-auto rounded-full bg-white border border-ivory-300 flex items-center justify-center text-sage-500 shadow-sm group-hover:bg-sage-50 group-hover:border-sage-200 transition-colors duration-300">
+                <div className="w-16 h-16 mx-auto bg-ivory-50 rounded-sm border border-ivory-300 flex items-center justify-center text-sage-500 shadow-sm group-hover:bg-sage-50 group-hover:border-sage-200 transition-colors duration-300">
                   {r.icon}
                 </div>
                 <h3 className="font-serif text-xl text-charcoal-800">{r.titulo}</h3>
@@ -133,12 +143,11 @@ export default function About() {
           <SectionHeader eyebrow="Portfolio" title="Proyectos que me enorgullecen" centered />
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
             {projects.map((p) => (
-              <div key={p.titulo} className="group cursor-default">
-                <div className="aspect-square bg-sage-50 rounded-sm mb-4 overflow-hidden">
-                  <div className="w-full h-full bg-gradient-to-br from-sage-100 to-blush-100 group-hover:scale-105 transition-transform duration-500" />
+              <div key={p.titulo} className="card-gallery group cursor-default">
+                <div className="w-full h-full bg-gradient-to-br from-sage-100 to-blush-100" />
+                <div className="gallery-overlay">
+                  <span className="gallery-label">{p.titulo}</span>
                 </div>
-                <h4 className="font-serif text-lg text-charcoal-800 mb-1">{p.titulo}</h4>
-                <p className="text-charcoal-500 text-sm leading-relaxed">{p.desc}</p>
               </div>
             ))}
           </div>
@@ -146,10 +155,10 @@ export default function About() {
       </section>
 
       {/* Testimonios */}
-      <section className="section bg-ivory-100">
+      <section className="section bg-ivory-50">
         <div className="container-content">
           <SectionHeader eyebrow="Testimonios" title="Lo que dicen mis clientes" centered />
-          <div className="mt-12 grid md:grid-cols-2 gap-6">
+          <div className="grid-reviews mt-12">
             {testimonials.map((t) => (
               <ReviewCard key={t.nombre} nombre={t.nombre} texto={t.texto} evento={t.evento} />
             ))}

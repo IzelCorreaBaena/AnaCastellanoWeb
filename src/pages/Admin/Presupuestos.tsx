@@ -7,6 +7,7 @@ import {
 import type { PresupuestoListItem } from '@app-types/models';
 import Modal from '../../components/ui/Modal';
 import LoadingSpinner from '../../components/ui/LoadingSpinner';
+import ImageUploader from '../../components/ui/ImageUploader';
 import { useToast } from '../../hooks/useToast';
 
 interface FormState {
@@ -16,6 +17,10 @@ interface FormState {
   items: PresupuestoItemInput[];
   igicPorcentaje: number;
   notas: string;
+  nombreEvento: string;
+  fechaEvento: string;
+  anticipo: number;
+  imagenes: string[];
 }
 
 interface FormErrors {
@@ -40,6 +45,10 @@ const INITIAL_FORM: FormState = {
   items: [{ ...EMPTY_ITEM }],
   igicPorcentaje: DEFAULT_IGIC,
   notas: '',
+  nombreEvento: '',
+  fechaEvento: '',
+  anticipo: 0,
+  imagenes: [],
 };
 
 const EUR = new Intl.NumberFormat('es-ES', {
@@ -191,6 +200,10 @@ export default function AdminPresupuestos() {
     if (form.clienteEmail.trim()) payload.clienteEmail = form.clienteEmail.trim();
     if (form.clienteTelefono.trim()) payload.clienteTelefono = form.clienteTelefono.trim();
     if (form.notas.trim()) payload.notas = form.notas.trim();
+    if (form.nombreEvento.trim()) payload.nombreEvento = form.nombreEvento.trim();
+    if (form.fechaEvento) payload.fechaEvento = form.fechaEvento;
+    if (form.anticipo > 0) payload.anticipo = form.anticipo;
+    if (form.imagenes.length > 0) payload.imagenes = form.imagenes;
 
     setSaving(true);
     try {
@@ -305,6 +318,31 @@ export default function AdminPresupuestos() {
         dismissOnBackdrop={false}
       >
         <div className="space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="form-label">Nombre del evento</label>
+              <input
+                className="input-field"
+                value={form.nombreEvento}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, nombreEvento: e.target.value }))
+                }
+                placeholder="Ej: Cumpleaños de Laura Luján"
+              />
+            </div>
+            <div>
+              <label className="form-label">Fecha del evento</label>
+              <input
+                type="date"
+                className="input-field"
+                value={form.fechaEvento}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, fechaEvento: e.target.value }))
+                }
+              />
+            </div>
+          </div>
+
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Nombre del cliente *</label>
@@ -446,6 +484,29 @@ export default function AdminPresupuestos() {
                 </p>
               )}
             </div>
+            <div>
+              <label className="form-label">Anticipo (€)</label>
+              <input
+                type="number"
+                min={0}
+                step="0.01"
+                className="input-field"
+                value={form.anticipo === 0 ? '' : form.anticipo}
+                onChange={(e) =>
+                  setForm((prev) => ({
+                    ...prev,
+                    anticipo: Number(e.target.value) || 0,
+                  }))
+                }
+                placeholder="0.00"
+              />
+              {form.anticipo > 0 && (
+                <p className="text-xs text-charcoal-500 mt-1 font-sans">
+                  Resto a pagar el día del evento:{' '}
+                  {EUR.format(Math.max(0, totals.total - form.anticipo))}
+                </p>
+              )}
+            </div>
           </div>
 
           <div>
@@ -459,6 +520,21 @@ export default function AdminPresupuestos() {
               }
               placeholder="Opcional"
             />
+          </div>
+
+          <div>
+            <label className="form-label">Imágenes adjuntas (opcional)</label>
+            <ImageUploader
+              images={form.imagenes}
+              uploadFn={presupuestosApi.uploadImage}
+              onChange={(imgs) => setForm((prev) => ({ ...prev, imagenes: imgs }))}
+              maxImages={10}
+              acceptVideos={false}
+              disabled={saving}
+            />
+            <p className="text-xs text-charcoal-400 mt-1 font-sans">
+              Las imágenes aparecerán en la segunda página del presupuesto.
+            </p>
           </div>
 
           <div className="bg-ivory-50 rounded-sm p-4 space-y-1 text-sm font-sans">

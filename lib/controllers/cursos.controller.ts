@@ -18,7 +18,7 @@ const cursoSchema = z.object({
   titulo: z.string().trim().min(1).max(150),
   descripcion: z.string().trim().max(5000).optional().default(''),
   imagen: z.string().url().max(500).optional().nullable(),
-  imagenes: z.array(z.string().url()).max(20).optional().nullable(),
+  imagenes: z.array(z.string().url()).max(20).optional(),
   precio: z.number().nonnegative().optional().nullable(),
   duracion: z.string().trim().max(100).optional().nullable(),
   modalidad: z.string().trim().max(100).optional().nullable(),
