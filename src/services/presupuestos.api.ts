@@ -14,6 +14,10 @@ export interface CreatePresupuestoInput {
   items: PresupuestoItemInput[];
   igicPorcentaje?: number;
   notas?: string;
+  nombreEvento?: string;
+  fechaEvento?: string;
+  anticipo?: number;
+  imagenes?: string[];
 }
 
 export const presupuestosApi = {
@@ -22,6 +26,13 @@ export const presupuestosApi = {
 
   create: (data: CreatePresupuestoInput): Promise<Presupuesto> =>
     http.post<Presupuesto>('/presupuestos', data).then((r) => r.data),
+
+  uploadImage: async (file: File): Promise<{ url: string }> => {
+    const formData = new FormData();
+    formData.append('image', file);
+    const { data } = await http.post<{ url: string }>('/uploads/image', formData);
+    return data;
+  },
 
   downloadPdf: async (id: string, numero: number): Promise<void> => {
     const response = await http.get<Blob>(`/presupuestos/${id}/pdf`, {

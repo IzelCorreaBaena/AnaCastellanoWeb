@@ -4,6 +4,7 @@ import { cursosApi } from '@services/cursos.api';
 import type { Curso } from '@app-types/models';
 import SectionHeader from '../components/ui/SectionHeader';
 import CursoDetailModal from '../components/ui/CursoDetailModal';
+import { resolveImg as resolveImageSrc, isVideoUrl } from '../utils/image';
 
 // ─── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -13,17 +14,6 @@ const formatPrecio = (precio: number): string =>
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(precio);
-
-const API_ORIGIN = import.meta.env.VITE_API_URL
-  ? import.meta.env.VITE_API_URL.replace(/\/api$/, '')
-  : 'http://localhost:4000';
-
-const resolveImageSrc = (src: string): string =>
-  src.startsWith('http') ? src : `${API_ORIGIN}${src}`;
-
-const isVideoUrl = (url: string): boolean =>
-  /\/video\/upload\//.test(url) ||
-  /\.(mp4|webm|mov|avi|mkv)(\?|$)/i.test(url);
 
 // ─── Skeleton card — displayed during loading ──────────────────────────────────
 
@@ -309,22 +299,13 @@ export default function Cursos() {
       {/* ── COURSES GRID ─────────────────────────────────────────────────────── */}
       <section
         id="cursos-grid"
-        className="section"
-        style={{ backgroundColor: 'var(--color-ivory-50)' }}
+        className="section bg-ivory-50"
         aria-label="Listado de cursos"
       >
         <div className="container-page">
           {/* Error notice — non-blocking, shows below header */}
           {error && (
-            <div
-              className="mb-10 px-5 py-4 rounded text-sm font-sans"
-              style={{
-                backgroundColor: '#FDF2F0',
-                color: '#A83022',
-                border: '1px solid #EDE3D5',
-              }}
-              role="alert"
-            >
+            <div className="mb-10 px-5 py-4 rounded-sm bg-blush-50 border border-blush-200 text-sm font-sans text-charcoal-700" role="alert">
               No ha sido posible cargar los cursos. Inténtalo de nuevo más
               tarde o{' '}
               <Link
@@ -370,24 +351,28 @@ export default function Cursos() {
 
       {/* ── CTA SECTION ──────────────────────────────────────────────────────── */}
       <section
-        className="section text-center"
-        style={{ backgroundColor: 'var(--color-ivory-100)' }}
+        className="relative bg-charcoal-900 overflow-hidden text-center"
         aria-label="Contacto para formaciones a medida"
       >
-        <div className="container-page">
-          <div className="cursos-cta">
+        <div className="absolute inset-0 opacity-5" aria-hidden>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-ivory-100" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-ivory-100" />
+        </div>
+        <div className="relative container-page">
+          <div className="cursos-cta py-24 lg:py-32">
             <div className="ornament-line mb-8" aria-hidden="true" />
-            <SectionHeader
-              eyebrow="¿Buscas algo a medida?"
-              title="Formaciones personalizadas"
-              subtitle="Cuéntame qué te gustaría aprender y diseñamos juntas un curso adaptado a ti, tu nivel y tus objetivos."
-              centered
-            />
+            <span className="section-header__eyebrow !text-gold-300">¿Buscas algo a medida?</span>
+            <h2 className="font-serif text-4xl lg:text-5xl text-ivory-50 mt-4 mb-4">
+              Formaciones personalizadas
+            </h2>
+            <p className="text-ivory-200/70 text-lg font-light max-w-prose mx-auto">
+              Cuéntame qué te gustaría aprender y diseñamos juntas un curso adaptado a ti, tu nivel y tus objetivos.
+            </p>
             <div className="flex flex-wrap justify-center gap-4 mt-8">
-              <Link to="/contact" className="btn btn-primary">
+              <Link to="/contact" className="btn btn-gold btn-lg">
                 Hablar con Ana
               </Link>
-              <Link to="/services" className="btn btn-ghost">
+              <Link to="/services" className="btn btn-ghost-inverse btn-lg">
                 Ver servicios
               </Link>
             </div>

@@ -85,7 +85,7 @@ export default function Contact() {
                       </span>
                       <div>
                         <p className="text-xs text-charcoal-400 uppercase tracking-wider font-sans">{item.label}</p>
-                        <p className="text-charcoal-800 font-sans group-hover:text-sage-600 transition-colors">{item.value}</p>
+                        <p className="text-charcoal-800 font-serif group-hover:text-sage-600 transition-colors">{item.value}</p>
                       </div>
                     </a>
                   </li>

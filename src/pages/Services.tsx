@@ -286,20 +286,25 @@ export default function Services() {
       </section>
 
       {/* CTA */}
-      <section className="section bg-ivory-100 text-center">
-        <div className="container-page max-w-2xl mx-auto space-y-6">
+      <section className="relative bg-charcoal-900 overflow-hidden text-center">
+        <div className="absolute inset-0 opacity-5" aria-hidden>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-ivory-100" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-ivory-100" />
+        </div>
+        <div className="relative container-page py-24 lg:py-32 max-w-2xl mx-auto space-y-6">
           <div className="ornament-line mb-6" aria-hidden />
-          <SectionHeader
-            eyebrow="¿Tienes dudas?"
-            title="Hablemos sin compromiso"
-            subtitle="Cuéntame tu proyecto y te preparo una propuesta personalizada."
-            centered
-          />
-          <div className="flex flex-wrap gap-4 justify-center">
-            <Link to="/contact" className="btn-primary">
+          <span className="section-header__eyebrow !text-gold-300">¿Tienes dudas?</span>
+          <h2 className="font-serif text-4xl lg:text-5xl text-ivory-50 mt-4 mb-4">
+            Hablemos sin compromiso
+          </h2>
+          <p className="text-ivory-200/70 text-lg font-light">
+            Cuéntame tu proyecto y te preparo una propuesta personalizada.
+          </p>
+          <div className="flex flex-wrap gap-4 justify-center pt-2">
+            <Link to="/contact" className="btn-gold btn-lg">
               Contactar ahora
             </Link>
-            <Link to="/reservations" className="btn-secondary">
+            <Link to="/reservations" className="btn-ghost-inverse btn-lg">
               Reservar cita
             </Link>
           </div>
