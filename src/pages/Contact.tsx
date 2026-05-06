@@ -50,11 +50,13 @@ export default function Contact() {
   return (
     <main>
       {/* Hero interior */}
-      <section className="relative h-64 flex items-end bg-charcoal-900 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-charcoal-900/80 to-charcoal-900/40" />
-        <div className="relative z-10 container-page pb-10">
-          <p className="text-gold-400 font-sans text-sm uppercase tracking-widest mb-2">Hablemos</p>
-          <h1 className="font-serif text-5xl text-white">Contacto</h1>
+      <section className="relative min-h-[280px] md:min-h-[340px] flex items-end bg-charcoal-900 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal-900/60 via-charcoal-900/70 to-charcoal-900/90" />
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-300/30 to-transparent" aria-hidden />
+        <div className="relative z-10 container-page pb-12 pt-28">
+          <span className="section-header__eyebrow !text-gold-300 !mb-3 block">Hablemos</span>
+          <h1 className="font-serif text-5xl lg:text-6xl text-white">Contacto</h1>
+          <div className="mt-4 w-12 h-px bg-gold-300" aria-hidden />
         </div>
       </section>
 
@@ -100,8 +102,9 @@ export default function Contact() {
             </div>
 
             {/* Formulario */}
-            <div className="bg-ivory-50 rounded-sm p-8 lg:p-10">
-              <h2 className="font-serif text-2xl text-charcoal-800 mb-6">Envíame un mensaje</h2>
+            <div className="bg-ivory-50 border border-ivory-300 rounded-sm p-8 lg:p-10 shadow-sm">
+              <h2 className="font-serif text-2xl text-charcoal-800 mb-2">Envíame un mensaje</h2>
+              <div className="w-10 h-px bg-gold-300 mb-6" aria-hidden />
               <ContactForm />
               <p className="mt-6 text-xs text-charcoal-400 leading-relaxed">
                 Al enviar este formulario aceptas nuestra política de privacidad. Tus datos se usarán

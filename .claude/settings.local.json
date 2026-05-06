@@ -4,7 +4,9 @@
       "mcp__plugin_claude-mem_mcp-search__search",
       "mcp__plugin_claude-mem_mcp-search__get_observations",
       "mcp__plugin_claude-mem_mcp-search__smart_outline",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "WebFetch(domain:api.anthropic.com)",
+      "Bash(curl:*)"
     ]
   }
 }

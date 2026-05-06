@@ -89,14 +89,26 @@ export default function Navbar({
 
         <button
           type="button"
-          aria-label="Abrir menú"
+          aria-label={open ? 'Cerrar menú' : 'Abrir menú'}
           aria-expanded={open}
-          className="nav__toggle md:hidden"
+          className="nav__toggle md:hidden relative w-7 h-7 flex flex-col justify-center items-center"
           onClick={() => setOpen((v) => !v)}
         >
-          <span className="nav__toggle-line" />
-          <span className="nav__toggle-line" />
-          <span className="nav__toggle-line" />
+          <span
+            className={`block w-full h-px transition-all duration-300 ease-soft-out ${
+              solid && !open ? 'bg-charcoal-900' : 'bg-white'
+            } ${open ? 'rotate-45 translate-y-[3px] !bg-charcoal-900' : ''}`}
+          />
+          <span
+            className={`block w-full h-px mt-[6px] transition-all duration-300 ease-soft-out ${
+              solid && !open ? 'bg-charcoal-900' : 'bg-white'
+            } ${open ? 'opacity-0' : ''}`}
+          />
+          <span
+            className={`block w-full h-px mt-[6px] transition-all duration-300 ease-soft-out ${
+              solid && !open ? 'bg-charcoal-900' : 'bg-white'
+            } ${open ? '-rotate-45 -translate-y-[9px] !bg-charcoal-900' : ''}`}
+          />
         </button>
       </div>
 
@@ -118,42 +130,57 @@ export default function Navbar({
           onClick={() => setOpen(false)}
         />
         <aside
-          className={`absolute right-0 top-0 h-full w-72 max-w-[85%] shadow-xl p-8 flex flex-col gap-6 transition-transform duration-slow ease-soft-out ${
+          className={`absolute right-0 top-0 h-full w-72 max-w-[85%] shadow-xl flex flex-col transition-transform duration-slow ease-soft-out ${
             open ? 'translate-x-0' : 'translate-x-full'
           }`}
           style={{ backgroundColor: '#FDFCF9' }}
         >
-          <div className="flex items-center justify-between">
-            <span className="font-serif text-xl text-charcoal-900">Menú</span>
+          {/* Drawer header */}
+          <div className="flex items-center justify-between px-8 pt-8 pb-4">
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-serif text-xl text-charcoal-900">Ana Castellano</span>
+            </div>
             <button
               type="button"
               aria-label="Cerrar menú"
-              className="text-charcoal-700 hover:text-charcoal-900 text-2xl leading-none"
+              className="w-8 h-8 rounded-full bg-ivory-200 hover:bg-ivory-300 flex items-center justify-center text-charcoal-600 transition-colors"
               onClick={() => setOpen(false)}
             >
-              &times;
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <path d="M1 1l12 12M13 1L1 13" />
+              </svg>
             </button>
           </div>
-          <nav className="flex flex-col gap-1">
+
+          {/* Gold ornament */}
+          <div className="mx-8 h-px bg-gradient-to-r from-gold-300 via-gold-200 to-transparent" />
+
+          {/* Nav links */}
+          <nav className="flex flex-col px-6 pt-6 gap-0.5 flex-1">
             {links.map((link) => (
               <NavLink
                 key={link.to}
                 to={link.to}
                 end={link.to === '/'}
                 className={({ isActive }) =>
-                  `py-3 px-2 border-b font-sans text-charcoal-800 ${
-                    isActive ? 'text-sage-600' : ''
+                  `py-3 px-3 rounded-md font-sans text-sm tracking-wide transition-colors duration-200 ${
+                    isActive
+                      ? 'text-sage-700 bg-sage-50 font-medium'
+                      : 'text-charcoal-700 hover:text-charcoal-900 hover:bg-ivory-200'
                   }`
                 }
-                style={{ borderColor: '#EDE3D5' }}
               >
                 {link.label}
               </NavLink>
             ))}
           </nav>
-          <Link to={ctaHref} className="btn-primary btn-full mt-auto">
-            {ctaLabel}
-          </Link>
+
+          {/* CTA */}
+          <div className="px-6 pb-8 pt-4">
+            <Link to={ctaHref} className="btn-primary btn-full">
+              {ctaLabel}
+            </Link>
+          </div>
         </aside>
       </div>,
       document.body,

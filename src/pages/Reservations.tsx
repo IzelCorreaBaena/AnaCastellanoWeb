@@ -15,11 +15,13 @@ export default function Reservations() {
   return (
     <main>
       {/* Hero interior */}
-      <section className="relative h-64 flex items-end bg-charcoal-900 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-charcoal-900/80 to-charcoal-900/40" />
-        <div className="relative z-10 container-page pb-10">
-          <p className="text-gold-400 font-sans text-sm uppercase tracking-widest mb-2">Empecemos</p>
-          <h1 className="font-serif text-5xl text-white">Solicita tu reserva</h1>
+      <section className="relative min-h-[280px] md:min-h-[340px] flex items-end bg-charcoal-900 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal-900/60 via-charcoal-900/70 to-charcoal-900/90" />
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-300/30 to-transparent" aria-hidden />
+        <div className="relative z-10 container-page pb-12 pt-28">
+          <span className="section-header__eyebrow !text-gold-300 !mb-3 block">Empecemos</span>
+          <h1 className="font-serif text-5xl lg:text-6xl text-white">Solicita tu reserva</h1>
+          <div className="mt-4 w-12 h-px bg-gold-300" aria-hidden />
         </div>
       </section>
 
@@ -27,17 +29,17 @@ export default function Reservations() {
       <section className="section bg-ivory-50">
         <div className="container-content">
           <SectionHeader eyebrow="Proceso" title="Así de sencillo" centered />
-          <div className="mt-10 grid sm:grid-cols-3 gap-8">
+          <div className="mt-12 grid sm:grid-cols-3 gap-10">
             {steps.map((s, idx) => (
               <div key={s.n} className="text-center relative">
                 {idx < steps.length - 1 && (
-                  <div className="hidden sm:block absolute top-6 left-[60%] w-full h-px bg-gold-200" />
+                  <div className="hidden sm:block absolute top-7 left-[60%] w-full h-px bg-gradient-to-r from-gold-300 to-gold-200/30" />
                 )}
-                <div className="w-12 h-12 rounded-full bg-sage-600 text-white font-serif text-lg flex items-center justify-center mx-auto mb-4 relative z-10">
+                <div className="w-14 h-14 rounded-full bg-charcoal-900 text-gold-300 font-serif text-lg flex items-center justify-center mx-auto mb-5 relative z-10 ring-4 ring-ivory-50">
                   {s.n}
                 </div>
                 <h3 className="font-serif text-xl text-charcoal-800 mb-2">{s.titulo}</h3>
-                <p className="text-charcoal-500 text-sm">{s.desc}</p>
+                <p className="text-charcoal-500 text-sm leading-relaxed">{s.desc}</p>
               </div>
             ))}
           </div>
@@ -53,7 +55,7 @@ export default function Reservations() {
             subtitle="Completa los datos y te respondo en menos de 24 horas."
             centered
           />
-          <div className="mt-10 bg-ivory-50 rounded-sm p-8 lg:p-12">
+          <div className="mt-10 bg-ivory-50 border border-ivory-300 rounded-sm p-8 lg:p-12 shadow-sm">
             <ReservationForm initialServiceId={initialServiceId} />
           </div>
         </div>

@@ -203,11 +203,13 @@ export default function Services() {
   return (
     <main>
       {/* Hero interior */}
-      <section className="relative h-64 flex items-end bg-charcoal-900 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-charcoal-900/80 to-charcoal-900/40" />
-        <div className="relative z-10 container-page pb-10">
-          <p className="text-gold-400 font-sans text-sm uppercase tracking-widest mb-2">Lo que ofrezco</p>
-          <h1 className="font-serif text-5xl text-white">Servicios</h1>
+      <section className="relative min-h-[280px] md:min-h-[340px] flex items-end bg-charcoal-900 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal-900/60 via-charcoal-900/70 to-charcoal-900/90" />
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-300/30 to-transparent" aria-hidden />
+        <div className="relative z-10 container-page pb-12 pt-28">
+          <span className="section-header__eyebrow !text-gold-300 !mb-3 block">Lo que ofrezco</span>
+          <h1 className="font-serif text-5xl lg:text-6xl text-white">Servicios</h1>
+          <div className="mt-4 w-12 h-px bg-gold-300" aria-hidden />
         </div>
       </section>
 
@@ -285,16 +287,22 @@ export default function Services() {
 
       {/* CTA */}
       <section className="section bg-ivory-100 text-center">
-        <div className="container-content max-w-2xl space-y-6">
+        <div className="container-page max-w-2xl mx-auto space-y-6">
+          <div className="ornament-line mb-6" aria-hidden />
           <SectionHeader
             eyebrow="¿Tienes dudas?"
             title="Hablemos sin compromiso"
             subtitle="Cuéntame tu proyecto y te preparo una propuesta personalizada."
             centered
           />
-          <Link to="/contact" className="btn-secondary inline-block">
-            Contactar ahora
-          </Link>
+          <div className="flex flex-wrap gap-4 justify-center">
+            <Link to="/contact" className="btn-primary">
+              Contactar ahora
+            </Link>
+            <Link to="/reservations" className="btn-secondary">
+              Reservar cita
+            </Link>
+          </div>
         </div>
       </section>
     </main>

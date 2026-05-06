@@ -64,11 +64,13 @@ export default function About() {
   return (
     <main>
       {/* Hero interior */}
-      <section className="relative h-72 md:h-96 flex items-end bg-charcoal-900 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-charcoal-900/80 to-charcoal-900/40" />
-        <div className="relative z-10 container-page pb-12">
-          <p className="text-gold-400 font-sans text-sm uppercase tracking-widest mb-2">Conóceme</p>
-          <h1 className="font-serif text-5xl text-white">Mi historia</h1>
+      <section className="relative min-h-[320px] md:min-h-[400px] flex items-end bg-charcoal-900 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-b from-charcoal-900/60 via-charcoal-900/70 to-charcoal-900/90" />
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-gold-300/30 to-transparent" aria-hidden />
+        <div className="relative z-10 container-page pb-14 pt-28">
+          <span className="section-header__eyebrow !text-gold-300 !mb-3 block">Conóceme</span>
+          <h1 className="font-serif text-5xl lg:text-6xl text-white">Mi historia</h1>
+          <div className="mt-4 w-12 h-px bg-gold-300" aria-hidden />
         </div>
       </section>
 
@@ -113,8 +115,8 @@ export default function About() {
           />
           <div className="mt-12 grid sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {reasons.map((r) => (
-              <div key={r.titulo} className="text-center space-y-4">
-                <div className="w-16 h-16 mx-auto rounded-full bg-sage-100 flex items-center justify-center text-sage-600">
+              <div key={r.titulo} className="text-center space-y-4 group">
+                <div className="w-16 h-16 mx-auto rounded-full bg-white border border-ivory-300 flex items-center justify-center text-sage-500 shadow-sm group-hover:bg-sage-50 group-hover:border-sage-200 transition-colors duration-300">
                   {r.icon}
                 </div>
                 <h3 className="font-serif text-xl text-charcoal-800">{r.titulo}</h3>
@@ -156,13 +158,22 @@ export default function About() {
       </section>
 
       {/* CTA */}
-      <section className="section bg-sage-600 text-white text-center">
-        <div className="container-content max-w-2xl space-y-6">
-          <h2 className="font-serif text-4xl">¿Empezamos a crear juntas?</h2>
-          <p className="text-sage-100 text-lg">Cuéntame tu historia y hagamos que florezca.</p>
-          <Link to="/reservations" className="btn-primary bg-white text-sage-700 hover:bg-ivory-100 inline-block">
-            Reservar una consulta
-          </Link>
+      <section className="relative bg-charcoal-900 overflow-hidden text-center">
+        <div className="absolute inset-0 opacity-5" aria-hidden>
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-ivory-100" />
+        </div>
+        <div className="relative container-page py-24 lg:py-32 max-w-2xl mx-auto space-y-6">
+          <div className="ornament-line mb-6" aria-hidden />
+          <h2 className="font-serif text-4xl lg:text-5xl text-ivory-50">¿Empezamos a crear juntas?</h2>
+          <p className="text-ivory-200/70 text-lg font-light">Cuéntame tu historia y hagamos que florezca.</p>
+          <div className="flex flex-wrap gap-4 justify-center pt-2">
+            <Link to="/reservations" className="btn-gold btn-lg">
+              Reservar una consulta
+            </Link>
+            <Link to="/contact" className="btn-ghost-inverse">
+              Contactar
+            </Link>
+          </div>
         </div>
       </section>
     </main>
