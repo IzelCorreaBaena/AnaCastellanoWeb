@@ -7,7 +7,7 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "build:server": "esbuild api/_entry.ts --bundle --platform=node --target=node20 --format=esm --packages=external --outfile=api/index.js",
-    "vercel-build": "(prisma migrate resolve --rolled-back 20260421212438_add_cursos 2>/dev/null || true) && prisma migrate deploy && npm run build:server && vite build && (prisma db seed || echo 'Seed skipped')",
+    "vercel-build": "(prisma migrate resolve --rolled-back 20260421212438_add_cursos 2>/dev/null || true) && (prisma migrate resolve --rolled-back 20260506000001_add_event_fields_to_presupuestos 2>/dev/null || true) && prisma migrate deploy && npm run build:server && vite build && (prisma db seed || echo 'Seed skipped')",
     "preview": "vite preview",
     "server": "tsx watch lib/server.ts",
     "postinstall": "prisma generate",

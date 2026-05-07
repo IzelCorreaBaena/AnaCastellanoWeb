@@ -14,13 +14,14 @@ interface FormState {
   clienteNombre: string;
   clienteEmail: string;
   clienteTelefono: string;
+  nombreEvento: string;
+  fechaEvento: string;
+  ubicacion: string;
+  anticipo: number;
+  imagenes: string[];
   items: PresupuestoItemInput[];
   igicPorcentaje: number;
   notas: string;
-  nombreEvento: string;
-  fechaEvento: string;
-  anticipo: number;
-  imagenes: string[];
 }
 
 interface FormErrors {
@@ -42,13 +43,14 @@ const INITIAL_FORM: FormState = {
   clienteNombre: '',
   clienteEmail: '',
   clienteTelefono: '',
+  nombreEvento: '',
+  fechaEvento: '',
+  ubicacion: '',
+  anticipo: 0,
+  imagenes: [],
   items: [{ ...EMPTY_ITEM }],
   igicPorcentaje: DEFAULT_IGIC,
   notas: '',
-  nombreEvento: '',
-  fechaEvento: '',
-  anticipo: 0,
-  imagenes: [],
 };
 
 const EUR = new Intl.NumberFormat('es-ES', {
@@ -197,13 +199,14 @@ export default function AdminPresupuestos() {
       })),
       igicPorcentaje: form.igicPorcentaje,
     };
-    if (form.clienteEmail.trim()) payload.clienteEmail = form.clienteEmail.trim();
+    if (form.clienteEmail.trim())    payload.clienteEmail    = form.clienteEmail.trim();
     if (form.clienteTelefono.trim()) payload.clienteTelefono = form.clienteTelefono.trim();
-    if (form.notas.trim()) payload.notas = form.notas.trim();
-    if (form.nombreEvento.trim()) payload.nombreEvento = form.nombreEvento.trim();
-    if (form.fechaEvento) payload.fechaEvento = form.fechaEvento;
-    if (form.anticipo > 0) payload.anticipo = form.anticipo;
-    if (form.imagenes.length > 0) payload.imagenes = form.imagenes;
+    if (form.nombreEvento.trim())    payload.nombreEvento    = form.nombreEvento.trim();
+    if (form.fechaEvento)            payload.fechaEvento     = form.fechaEvento;
+    if (form.ubicacion.trim())       payload.ubicacion       = form.ubicacion.trim();
+    if (form.anticipo > 0)           payload.anticipo        = form.anticipo;
+    if (form.imagenes.length > 0)    payload.imagenes        = form.imagenes;
+    if (form.notas.trim())           payload.notas           = form.notas.trim();
 
     setSaving(true);
     try {
@@ -285,15 +288,11 @@ export default function AdminPresupuestos() {
                 <tr key={p.id} className="hover:bg-ivory-50 transition-colors">
                   <td className="px-4 py-3 text-charcoal-700 font-medium">#{p.numero}</td>
                   <td className="px-4 py-3 text-charcoal-700">{p.clienteNombre}</td>
-                  <td className="px-4 py-3 text-charcoal-500">
-                    {p.clienteEmail ?? '—'}
-                  </td>
+                  <td className="px-4 py-3 text-charcoal-500">{p.clienteEmail ?? '—'}</td>
                   <td className="px-4 py-3 text-right text-charcoal-700">
                     {EUR.format(p.total)}
                   </td>
-                  <td className="px-4 py-3 text-charcoal-500">
-                    {formatDate(p.createdAt)}
-                  </td>
+                  <td className="px-4 py-3 text-charcoal-500">{formatDate(p.createdAt)}</td>
                   <td className="px-4 py-3 text-right">
                     <button
                       onClick={() => void handleDownload(p.id, p.numero)}
@@ -318,6 +317,7 @@ export default function AdminPresupuestos() {
         dismissOnBackdrop={false}
       >
         <div className="space-y-5">
+          {/* Datos del evento */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Nombre del evento</label>
@@ -341,8 +341,20 @@ export default function AdminPresupuestos() {
                 }
               />
             </div>
+            <div>
+              <label className="form-label">Ubicación</label>
+              <input
+                className="input-field"
+                value={form.ubicacion}
+                onChange={(e) =>
+                  setForm((prev) => ({ ...prev, ubicacion: e.target.value }))
+                }
+                placeholder="Ej: Baradero"
+              />
+            </div>
           </div>
 
+          {/* Datos del cliente */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">Nombre del cliente *</label>
@@ -377,7 +389,7 @@ export default function AdminPresupuestos() {
                 </p>
               )}
             </div>
-            <div className="sm:col-span-2">
+            <div>
               <label className="form-label">Teléfono</label>
               <input
                 className="input-field"
@@ -390,6 +402,7 @@ export default function AdminPresupuestos() {
             </div>
           </div>
 
+          {/* Líneas */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs uppercase tracking-wider text-charcoal-400 font-sans">
@@ -405,7 +418,8 @@ export default function AdminPresupuestos() {
             </div>
             <div className="space-y-2">
               {form.items.map((item, idx) => {
-                const lineTotal = (Number.isFinite(item.cantidad) ? item.cantidad : 0) *
+                const lineTotal =
+                  (Number.isFinite(item.cantidad) ? item.cantidad : 0) *
                   (Number.isFinite(item.precioUnitario) ? item.precioUnitario : 0);
                 return (
                   <div
@@ -461,6 +475,7 @@ export default function AdminPresupuestos() {
             )}
           </div>
 
+          {/* IGIC y anticipo */}
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="form-label">IGIC %</label>
@@ -509,6 +524,7 @@ export default function AdminPresupuestos() {
             </div>
           </div>
 
+          {/* Notas */}
           <div>
             <label className="form-label">Notas</label>
             <textarea
@@ -522,6 +538,7 @@ export default function AdminPresupuestos() {
             />
           </div>
 
+          {/* Imágenes */}
           <div>
             <label className="form-label">Imágenes adjuntas (opcional)</label>
             <ImageUploader
@@ -537,6 +554,7 @@ export default function AdminPresupuestos() {
             </p>
           </div>
 
+          {/* Resumen totales */}
           <div className="bg-ivory-50 rounded-sm p-4 space-y-1 text-sm font-sans">
             <div className="flex justify-between text-charcoal-600">
               <span>Subtotal</span>

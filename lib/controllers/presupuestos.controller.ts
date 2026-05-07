@@ -31,6 +31,7 @@ const presupuestoSchema = z.object({
   clienteTelefono: z.string().trim().optional(),
   nombreEvento:    z.string().trim().max(200).optional(),
   fechaEvento:     z.string().optional(),
+  ubicacion:       z.string().trim().max(200).optional(),
   anticipo:        z.number().nonnegative().optional(),
   imagenes:        z.array(z.string().url()).max(10).optional(),
   items:           z.array(itemSchema).min(1),
@@ -39,16 +40,6 @@ const presupuestoSchema = z.object({
 });
 
 type PresupuestoItem = { descripcion: string; cantidad: number; precioUnitario: number };
-
-// ── Helpers ──────────────────────────────────────────────────────────────────
-
-const fmtMoney = (n: number) =>
-  n.toLocaleString('es-ES', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
-
-const fmtDate = (d: Date) =>
-  d.toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' });
-
-// ── Controller ───────────────────────────────────────────────────────────────
 
 export const presupuestosController = {
   list: (async (_req, res, next) => {
@@ -87,6 +78,7 @@ export const presupuestosController = {
           clienteTelefono: data.clienteTelefono,
           nombreEvento:    data.nombreEvento,
           fechaEvento:     data.fechaEvento ? new Date(data.fechaEvento) : undefined,
+          ubicacion:       data.ubicacion,
           anticipo:        data.anticipo,
           imagenes:        data.imagenes ?? [],
           items:           data.items,
@@ -112,14 +104,11 @@ export const presupuestosController = {
         return;
       }
 
-      const items = presupuesto.items as PresupuestoItem[];
-      const totalNum    = Number(presupuesto.total);
-      const subtotalNum = Number(presupuesto.subtotal);
-      const igicNum     = Number(presupuesto.igicImporte);
-      const igicPct     = Number(presupuesto.igicPorcentaje);
+      const items      = presupuesto.items as PresupuestoItem[];
       const anticipoNum = presupuesto.anticipo != null ? Number(presupuesto.anticipo) : null;
+      const imagenes    = presupuesto.imagenes as string[];
 
-      const doc = new PDFDocument({ margin: 50, size: 'A4' });
+      const doc = new PDFDocument({ margin: 0, size: 'A4' });
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader(
         'Content-Disposition',
@@ -127,233 +116,239 @@ export const presupuestosController = {
       );
       doc.pipe(res);
 
-      const PAGE_LEFT  = 50;
-      const PAGE_RIGHT = 545;
-      const PAGE_WIDTH = 495;
-      const GOLD       = '#C9A96E';
-      const CHARCOAL   = '#2C2C2C';
-      const TEXT_MAIN  = '#333333';
-      const TEXT_GREY  = '#888888';
+      // ── Design tokens ─────────────────────────────────────────────────────
+      const M        = 45;
+      const PAGE_W   = 595;
+      const DARK     = '#3A4242';
+      const GOLD     = '#C4A45A';
+      const TEXT_DK  = '#2C2C2C';
+      const TEXT_MD  = '#555555';
+      const LINE_CLR = '#DEDBD7';
 
-      // ── Helpers locales ──────────────────────────────────────────────────
+      const fmt = new Intl.NumberFormat('es-ES', { maximumFractionDigits: 2 });
 
-      const drawRule = (color = GOLD, weight = 1.5) => {
-        doc.moveTo(PAGE_LEFT, doc.y)
-           .lineTo(PAGE_RIGHT, doc.y)
-           .strokeColor(color)
-           .lineWidth(weight)
-           .stroke();
+      const fmtDate = (d: Date) => {
+        const dd = String(d.getDate()).padStart(2, '0');
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const yy = d.getFullYear();
+        return `${dd}-${mm}-${yy}`;
       };
 
-      const sectionHeader = (title: string) => {
-        doc.moveDown(0.8);
-        const y = doc.y;
-        doc.rect(PAGE_LEFT, y, PAGE_WIDTH, 18).fill(CHARCOAL);
-        doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold')
-           .text(title.toUpperCase(), PAGE_LEFT + 8, y + 5, { width: PAGE_WIDTH - 16, lineBreak: false });
-        doc.moveDown(0.2);
-        doc.y = y + 24;
-        doc.font('Helvetica');
-      };
+      // ── 1. Info card (left) ────────────────────────────────────────────────
+      const CARD_X = M;
+      const CARD_Y = M;
+      const CARD_W = 215;
+      const CARD_H = 100;
 
-      // ── Cabecera ─────────────────────────────────────────────────────────
+      doc.roundedRect(CARD_X, CARD_Y, CARD_W, CARD_H, 14).fill(DARK);
 
-      drawRule(GOLD, 2);
-      doc.moveDown(0.6);
+      const labelX = CARD_X + 14;
+      const valueX = CARD_X + 84;
+      const valueW = CARD_W - 84 - 10;
 
-      doc.fontSize(26).font('Helvetica-Bold').fillColor(CHARCOAL)
-         .text('ANA CASTELLANO', { align: 'center' });
-      doc.fontSize(11).font('Helvetica').fillColor(TEXT_GREY)
-         .text('FLORISTA & DISEÑO FLORAL', { align: 'center' });
-      doc.moveDown(0.3);
-      doc.fontSize(8).fillColor(TEXT_GREY)
-         .text('anacastellano.com  ·  hola@anacastellano.com', { align: 'center' });
-      doc.moveDown(0.6);
+      const defaultDate = fmtDate(presupuesto.createdAt);
+      const fechaStr    = presupuesto.fechaEvento ? fmtDate(presupuesto.fechaEvento) : defaultDate;
 
-      drawRule(GOLD, 2);
-      doc.moveDown(0.8);
+      const infoRows: [string, string][] = [
+        ['Fecha',     fechaStr],
+        ['Evento',    presupuesto.nombreEvento ?? '—'],
+        ['Cliente',   presupuesto.clienteNombre],
+        ['Ubicación', presupuesto.ubicacion    ?? '—'],
+      ];
 
-      // ── Número y fecha ───────────────────────────────────────────────────
-
-      const numStr  = String(presupuesto.numero).padStart(3, '0');
-      const fechaEmision = fmtDate(presupuesto.createdAt);
-
-      doc.fontSize(13).font('Helvetica-Bold').fillColor(CHARCOAL)
-         .text(`PRESUPUESTO Nº ${numStr}`, PAGE_LEFT, doc.y, { continued: false, lineBreak: false });
-
-      // Fecha aligned right on same baseline
-      doc.fontSize(10).font('Helvetica').fillColor(TEXT_GREY)
-         .text(`Fecha: ${fechaEmision}`, PAGE_LEFT, doc.y - 16, { align: 'right', width: PAGE_WIDTH });
-
-      doc.moveDown(1.2);
-
-      // ── Datos cliente ────────────────────────────────────────────────────
-
-      sectionHeader('Datos del cliente');
-
-      doc.fontSize(10).font('Helvetica').fillColor(TEXT_MAIN);
-      doc.text(`Nombre: ${presupuesto.clienteNombre}`, PAGE_LEFT + 8);
-      if (presupuesto.clienteEmail)    doc.text(`Email: ${presupuesto.clienteEmail}`, PAGE_LEFT + 8);
-      if (presupuesto.clienteTelefono) doc.text(`Teléfono: ${presupuesto.clienteTelefono}`, PAGE_LEFT + 8);
-
-      if (presupuesto.nombreEvento || presupuesto.fechaEvento) {
-        doc.moveDown(0.5);
-        if (presupuesto.nombreEvento)
-          doc.text(`Evento: ${presupuesto.nombreEvento}`, PAGE_LEFT + 8);
-        if (presupuesto.fechaEvento)
-          doc.text(`Fecha del evento: ${fmtDate(presupuesto.fechaEvento)}`, PAGE_LEFT + 8);
+      let ry = CARD_Y + 13;
+      doc.font('Helvetica').fontSize(8.5).fillColor('#FFFFFF');
+      for (const [label, value] of infoRows) {
+        doc.text(label, labelX, ry, { width: 62, lineBreak: false });
+        doc.text(value, valueX, ry, { width: valueW, lineBreak: false, ellipsis: true });
+        ry += 20;
       }
 
-      // ── Descripción / notas ──────────────────────────────────────────────
+      // ── 2. Logo (right) ────────────────────────────────────────────────────
+      const LOGO_X = CARD_X + CARD_W + 15;
+      const LOGO_W = PAGE_W - M - LOGO_X;
+      const midX   = LOGO_X + LOGO_W / 2;
 
-      if (presupuesto.notas) {
-        sectionHeader('Descripción del servicio');
-        doc.fontSize(10).font('Helvetica').fillColor(TEXT_MAIN)
-           .text(presupuesto.notas, PAGE_LEFT + 8, doc.y, { width: PAGE_WIDTH - 16 });
-      }
+      doc.font('Times-Italic').fontSize(24).fillColor(TEXT_DK)
+        .text('Ana Castellano', LOGO_X, CARD_Y + 14, { width: LOGO_W, align: 'center', lineBreak: false });
 
-      // ── Tabla de servicios ───────────────────────────────────────────────
+      doc.moveTo(midX - 55, CARD_Y + 50)
+        .lineTo(midX + 55, CARD_Y + 50)
+        .strokeColor(GOLD).lineWidth(0.8).stroke();
 
-      sectionHeader('Desglose de servicios');
+      doc.font('Helvetica').fontSize(8).fillColor(TEXT_DK)
+        .text('F L O R I S T A', LOGO_X, CARD_Y + 57, { width: LOGO_W, align: 'center', lineBreak: false });
 
-      const COL = { desc: PAGE_LEFT, cant: PAGE_LEFT + 300, precio: PAGE_LEFT + 355, importe: PAGE_LEFT + 415 };
-      const COL_W = { desc: 290, cant: 50, precio: 55, importe: 80 };
+      // ── 3. Divider ─────────────────────────────────────────────────────────
+      const DIV_Y = CARD_Y + CARD_H + 18;
+      doc.moveTo(M, DIV_Y).lineTo(PAGE_W - M, DIV_Y)
+        .strokeColor(LINE_CLR).lineWidth(0.6).stroke();
+
+      // ── 4. Table ───────────────────────────────────────────────────────────
+      const TBL_Y = DIV_Y + 14;
+      const TBL_L = M;
+      const TBL_W = PAGE_W - M * 2;
+
+      const C_DESC  = { x: TBL_L,       w: 260 };
+      const C_QTY   = { x: TBL_L + 260, w: 65  };
+      const C_PRICE = { x: TBL_L + 325, w: 85  };
+      const C_TOTAL = { x: TBL_L + 410, w: 95  };
+
+      const HDR_H = 24;
+      doc.rect(TBL_L, TBL_Y, TBL_W, HDR_H).fill(DARK);
+      doc.font('Helvetica-Bold').fontSize(9).fillColor('#FFFFFF');
+      doc.text('Descripción', C_DESC.x + 8, TBL_Y + 7, { width: C_DESC.w - 8,  lineBreak: false });
+      doc.text('Cantidad',    C_QTY.x,      TBL_Y + 7, { width: C_QTY.w,   align: 'center', lineBreak: false });
+      doc.text('Precio',      C_PRICE.x,    TBL_Y + 7, { width: C_PRICE.w, align: 'right',  lineBreak: false });
+      doc.text('Total',       C_TOTAL.x,    TBL_Y + 7, { width: C_TOTAL.w - 5, align: 'right', lineBreak: false });
+
       const ROW_H = 20;
+      let curY = TBL_Y + HDR_H;
 
-      // Cabecera de tabla
-      const hY = doc.y;
-      doc.rect(PAGE_LEFT, hY, PAGE_WIDTH, ROW_H).fill(CHARCOAL);
-      doc.fillColor('#FFFFFF').fontSize(8).font('Helvetica-Bold');
-      doc.text('Descripción',  COL.desc    + 5, hY + 6, { width: COL_W.desc,    lineBreak: false });
-      doc.text('Cant.',        COL.cant,         hY + 6, { width: COL_W.cant,    align: 'right', lineBreak: false });
-      doc.text('Precio',       COL.precio,       hY + 6, { width: COL_W.precio,  align: 'right', lineBreak: false });
-      doc.text('Importe',      COL.importe,      hY + 6, { width: COL_W.importe, align: 'right', lineBreak: false });
-
-      let rowY = hY + ROW_H;
-
-      doc.font('Helvetica').fontSize(9);
-      items.forEach((item, i) => {
+      items.forEach((item) => {
         const importe = item.cantidad * item.precioUnitario;
-        doc.rect(PAGE_LEFT, rowY, PAGE_WIDTH, ROW_H).fill(i % 2 === 0 ? '#FAF7F2' : '#FFFFFF');
-        doc.fillColor(TEXT_MAIN);
-        doc.text(item.descripcion,              COL.desc    + 5, rowY + 5, { width: COL_W.desc,    lineBreak: false });
-        doc.text(String(item.cantidad),         COL.cant,         rowY + 5, { width: COL_W.cant,    align: 'right', lineBreak: false });
-        doc.text(fmtMoney(item.precioUnitario), COL.precio,       rowY + 5, { width: COL_W.precio,  align: 'right', lineBreak: false });
-        doc.text(fmtMoney(importe),             COL.importe,      rowY + 5, { width: COL_W.importe, align: 'right', lineBreak: false });
-        rowY += ROW_H;
+        doc.font('Helvetica').fontSize(9).fillColor(TEXT_DK);
+        doc.text(item.descripcion, C_DESC.x + 8, curY + 5,
+          { width: C_DESC.w - 14, lineBreak: false, ellipsis: true });
+        doc.text(String(item.cantidad), C_QTY.x, curY + 5,
+          { width: C_QTY.w, align: 'center', lineBreak: false });
+        if (item.cantidad !== 1) {
+          doc.text(fmt.format(item.precioUnitario), C_PRICE.x, curY + 5,
+            { width: C_PRICE.w, align: 'right', lineBreak: false });
+        }
+        doc.text(fmt.format(importe), C_TOTAL.x, curY + 5,
+          { width: C_TOTAL.w - 5, align: 'right', lineBreak: false });
+        doc.moveTo(TBL_L, curY + ROW_H).lineTo(TBL_L + TBL_W, curY + ROW_H)
+          .strokeColor(LINE_CLR).lineWidth(0.4).stroke();
+        curY += ROW_H;
       });
 
-      // Línea cierre tabla
-      doc.moveTo(PAGE_LEFT, rowY).lineTo(PAGE_RIGHT, rowY).strokeColor(GOLD).lineWidth(1).stroke();
-      doc.y = rowY + 10;
+      // ── 5. Footer ──────────────────────────────────────────────────────────
+      const FTR_Y       = curY + 26;
+      const FTR_LEFT_W  = 280;
+      const FTR_RIGHT_X = M + FTR_LEFT_W + 15;
+      const FTR_RIGHT_W = PAGE_W - M - FTR_RIGHT_X;
 
-      // ── Totales ──────────────────────────────────────────────────────────
+      const SUB      = Number(presupuesto.subtotal);
+      const IGIC_PCT = Number(presupuesto.igicPorcentaje);
+      const IGIC_IMP = Number(presupuesto.igicImporte);
+      const TOTAL    = Number(presupuesto.total);
 
-      const LABEL_X = 370;
-      const VALUE_X = 460;
-      const VALUE_W = 80;
+      const TOT_LBL_X = FTR_RIGHT_X;
+      const TOT_VAL_X = FTR_RIGHT_X + 90;
+      const TOT_VAL_W = FTR_RIGHT_W - 90;
 
-      const printRow = (label: string, value: string, bold = false, color = TEXT_MAIN) => {
-        const ty = doc.y;
-        doc.fontSize(bold ? 11 : 10)
-           .font(bold ? 'Helvetica-Bold' : 'Helvetica')
-           .fillColor(bold ? '#000000' : color)
-           .text(label, LABEL_X, ty, { width: 85, align: 'right', lineBreak: false })
-           .text(value, VALUE_X, ty, { width: VALUE_W, align: 'right', lineBreak: false });
-        doc.moveDown(bold ? 0.6 : 0.4);
-      };
-
-      doc.moveDown(0.3);
-      printRow('Subtotal:', fmtMoney(subtotalNum));
-      printRow(`IGIC (${igicPct}%):`, fmtMoney(igicNum));
-
-      // Separador antes del total
-      doc.moveTo(LABEL_X, doc.y)
-         .lineTo(PAGE_RIGHT, doc.y)
-         .strokeColor(CHARCOAL).lineWidth(0.5).stroke();
-      doc.moveDown(0.3);
-
-      printRow('TOTAL:', fmtMoney(totalNum), true);
-
-      // ── Condiciones de pago ──────────────────────────────────────────────
-
-      sectionHeader('Condiciones');
-
-      doc.fontSize(10).font('Helvetica').fillColor(TEXT_MAIN);
+      doc.font('Helvetica').fontSize(9).fillColor(TEXT_MD);
+      doc.text('TOTAL',           TOT_LBL_X, FTR_Y,      { width: 85, lineBreak: false });
+      doc.text(fmt.format(SUB),   TOT_VAL_X, FTR_Y,      { width: TOT_VAL_W, align: 'right', lineBreak: false });
+      doc.text(`IGIC ${IGIC_PCT}%`, TOT_LBL_X, FTR_Y + 16, { width: 85, lineBreak: false });
+      doc.text(fmt.format(IGIC_IMP), TOT_VAL_X, FTR_Y + 16, { width: TOT_VAL_W, align: 'right', lineBreak: false });
 
       if (anticipoNum !== null) {
-        const resto = totalNum - anticipoNum;
-        doc.text(`Anticipo:          ${fmtMoney(anticipoNum)}`, PAGE_LEFT + 8);
-        doc.text(`Resto a pagar:     ${fmtMoney(resto)}  (el día del evento)`, PAGE_LEFT + 8);
-        doc.moveDown(0.4);
+        const resto = TOTAL - anticipoNum;
+        doc.text('Anticipo',              TOT_LBL_X, FTR_Y + 32, { width: 85, lineBreak: false });
+        doc.text(fmt.format(anticipoNum), TOT_VAL_X, FTR_Y + 32, { width: TOT_VAL_W, align: 'right', lineBreak: false });
+        doc.text('Resto',                 TOT_LBL_X, FTR_Y + 48, { width: 85, lineBreak: false });
+        doc.text(fmt.format(resto),       TOT_VAL_X, FTR_Y + 48, { width: TOT_VAL_W, align: 'right', lineBreak: false });
       }
 
-      doc.fillColor(TEXT_GREY)
-         .text('Forma de pago: Transferencia bancaria o efectivo', PAGE_LEFT + 8);
-      doc.text('Validez del presupuesto: 30 días desde la fecha de emisión', PAGE_LEFT + 8);
-      doc.moveDown(0.3);
-      doc.text(
-        'Cancelación: Con más de 7 días de antelación, se devuelve el anticipo íntegro. ' +
-        'Con menos de 7 días, el anticipo no es reembolsable.',
-        PAGE_LEFT + 8,
-        doc.y,
-        { width: PAGE_WIDTH - 16 },
-      );
+      const sepOffset = anticipoNum !== null ? 64 : 31;
+      doc.moveTo(TOT_LBL_X, FTR_Y + sepOffset).lineTo(PAGE_W - M, FTR_Y + sepOffset)
+        .strokeColor(DARK).lineWidth(0.5).stroke();
 
-      // ── Footer ───────────────────────────────────────────────────────────
+      doc.font('Helvetica-Bold').fontSize(10).fillColor(TEXT_DK);
+      doc.text('TOTAL FINAL',      TOT_LBL_X, FTR_Y + sepOffset + 5, { width: 85, lineBreak: false });
+      doc.text(fmt.format(TOTAL),  TOT_VAL_X, FTR_Y + sepOffset + 5, { width: TOT_VAL_W, align: 'right', lineBreak: false });
 
-      doc.moveDown(1.5);
-      drawRule(GOLD, 1.5);
-      doc.moveDown(0.5);
-      doc.fontSize(10).font('Helvetica-Bold').fillColor(CHARCOAL)
-         .text('Gracias por confiar en Ana Castellano Florista', { align: 'center' });
-      doc.moveDown(0.3);
-      drawRule(GOLD, 1.5);
+      // Contact info
+      const CON_Y = FTR_Y + sepOffset + 30;
+      doc.font('Helvetica').fontSize(8).fillColor(TEXT_MD);
 
-      // ── Segunda página: Imágenes adjuntas ────────────────────────────────
+      const drawInstIcon = (x: number, y: number) => {
+        doc.save();
+        doc.strokeColor(TEXT_MD).lineWidth(0.7);
+        doc.roundedRect(x, y, 9, 9, 2).stroke();
+        doc.circle(x + 4.5, y + 4.5, 2.2).stroke();
+        doc.restore();
+      };
+      const drawPhoneIcon = (x: number, y: number) => {
+        doc.save();
+        doc.strokeColor(TEXT_MD).lineWidth(0.7);
+        doc.moveTo(x + 1.5, y + 1).lineTo(x + 4.5, y + 1)
+          .bezierCurveTo(x + 5.5, y + 1, x + 5.5, y + 4, x + 5, y + 4.5)
+          .lineTo(x + 5, y + 5.5)
+          .bezierCurveTo(x + 5, y + 6.5, x + 3.5, y + 8, x + 2, y + 8)
+          .bezierCurveTo(x + 0.5, y + 8, x, y + 6.5, x, y + 5.5)
+          .lineTo(x, y + 4.5)
+          .bezierCurveTo(x, y + 4, x + 1, y + 4, x + 1.5, y + 4)
+          .lineTo(x + 1.5, y + 1).stroke();
+        doc.restore();
+      };
+      const drawMailIcon = (x: number, y: number) => {
+        doc.save();
+        doc.strokeColor(TEXT_MD).lineWidth(0.7);
+        doc.rect(x, y + 1.5, 10, 7).stroke();
+        doc.moveTo(x, y + 1.5).lineTo(x + 5, y + 6).lineTo(x + 10, y + 1.5).stroke();
+        doc.restore();
+      };
 
-      const imagenes = presupuesto.imagenes as string[];
+      drawInstIcon(FTR_RIGHT_X, CON_Y);
+      doc.text('insta: anacastellanoflorista', FTR_RIGHT_X + 13, CON_Y + 1, { lineBreak: false });
+      drawPhoneIcon(FTR_RIGHT_X, CON_Y + 15);
+      doc.text('tlf: 662454170', FTR_RIGHT_X + 13, CON_Y + 16, { lineBreak: false });
+      drawMailIcon(FTR_RIGHT_X, CON_Y + 30);
+      doc.text('Anacastellano495@gmail.com', FTR_RIGHT_X + 13, CON_Y + 31, { lineBreak: false });
+
+      // Payment info (left)
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(TEXT_DK)
+        .text('CONFIRMACIÓN RESERVADA', M, FTR_Y, { width: FTR_LEFT_W, lineBreak: false });
+      doc.font('Helvetica').fontSize(8).fillColor(TEXT_MD);
+      doc.text('Transferencia del 50% a la siguiente cuenta.', M, FTR_Y + 14, { width: FTR_LEFT_W, lineBreak: false });
+      doc.font('Helvetica-Bold').fontSize(8).fillColor(TEXT_DK)
+        .text('Beneficiario: Ana Lourdes Castellano Dominguez', M, FTR_Y + 26, { width: FTR_LEFT_W, lineBreak: false });
+      doc.font('Helvetica').fontSize(8).fillColor(TEXT_MD);
+      doc.text('Banco Abanca CC. ES222080085361304055062', M, FTR_Y + 38, { width: FTR_LEFT_W, lineBreak: false });
+      doc.text('Concepto (Nombre de los Novios y Fecha Boda)', M, FTR_Y + 50, { width: FTR_LEFT_W, lineBreak: false });
+      doc.text('El 50% restante deberá abonarse 10 días antes del evento.', M, FTR_Y + 62, { width: FTR_LEFT_W, lineBreak: false });
+
+      if (presupuesto.notas) {
+        doc.font('Helvetica').fontSize(8).fillColor(TEXT_MD)
+          .text(`Notas: ${presupuesto.notas}`, M, FTR_Y + 82, { width: PAGE_W - M * 2 });
+      }
+
+      // ── 6. Segunda página: imágenes adjuntas ───────────────────────────────
       if (imagenes && imagenes.length > 0) {
         doc.addPage();
 
-        // Título con la misma barra oscura
-        drawRule(GOLD, 2);
-        doc.moveDown(0.6);
-        doc.fontSize(13).font('Helvetica-Bold').fillColor(CHARCOAL)
-           .text('IMÁGENES ADJUNTAS', { align: 'center' });
-        doc.moveDown(0.6);
-        drawRule(GOLD, 1.5);
-        doc.moveDown(1);
+        doc.font('Helvetica-Bold').fontSize(13).fillColor(TEXT_DK)
+          .text('IMÁGENES ADJUNTAS', M, M + 10, { width: PAGE_W - M * 2, align: 'center', lineBreak: false });
 
-        // Grid 2 columnas — posicionamiento absoluto por fila/columna
-        const IMG_W  = 220;
-        const IMG_H  = 165;
-        const GAP_X  = 15;
-        const GAP_Y  = 20;
-        const COLS   = 2;
-        const GRID_TOP = doc.page.margins.top + 80; // Y base tras el título
+        doc.moveTo(M, M + 35).lineTo(PAGE_W - M, M + 35)
+          .strokeColor(LINE_CLR).lineWidth(0.6).stroke();
+
+        const IMG_W   = 220;
+        const IMG_H   = 165;
+        const GAP_X   = 15;
+        const GAP_Y   = 20;
+        const COLS    = 2;
+        const GRID_TOP = M + 50;
 
         let pageRow = 0;
         for (let i = 0; i < imagenes.length; i++) {
-          const col   = i % COLS;
-          const pageH = doc.page.height - doc.page.margins.bottom;
-          const imgY  = GRID_TOP + pageRow * (IMG_H + GAP_Y);
-          const imgX  = PAGE_LEFT + col * (IMG_W + GAP_X);
+          const col  = i % COLS;
+          const imgY = GRID_TOP + pageRow * (IMG_H + GAP_Y);
+          const imgX = M + col * (IMG_W + GAP_X);
 
-          // Nueva página cuando la fila actual supera el área imprimible
-          if (col === 0 && i > 0 && imgY + IMG_H > pageH) {
+          if (col === 0 && i > 0 && imgY + IMG_H > doc.page.height - M) {
             doc.addPage();
             pageRow = 0;
           }
 
           const finalY = GRID_TOP + pageRow * (IMG_H + GAP_Y);
-
           try {
             const buffer = await fetchImageBuffer(imagenes[i]);
             doc.image(buffer, imgX, finalY, { fit: [IMG_W, IMG_H] });
-          } catch {
-            // Si falla la descarga, continúa con las demás imágenes
-          }
+          } catch { /* skip failed images */ }
 
           if (col === COLS - 1) pageRow++;
         }
