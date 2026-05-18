@@ -19,6 +19,8 @@ async function fetchImageBuffer(url: string): Promise<Buffer> {
   });
 }
 
+const idParamSchema = z.object({ id: z.string().uuid() });
+
 const itemSchema = z.object({
   descripcion:    z.string().trim().min(1).max(300),
   cantidad:       z.number().positive(),
@@ -96,8 +98,9 @@ export const presupuestosController = {
 
   pdf: (async (req, res, next) => {
     try {
+      const { id } = idParamSchema.parse(req.params);
       const presupuesto = await prisma.presupuesto.findUnique({
-        where: { id: req.params.id },
+        where: { id },
       });
       if (!presupuesto) {
         res.status(404).json({ success: false, error: 'Presupuesto no encontrado' });

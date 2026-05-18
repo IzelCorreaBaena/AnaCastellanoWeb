@@ -33,7 +33,7 @@ export const authController = {
       // Minimal JWT payload: only the subject (admin id). Do NOT embed email/username
       // or any PII — the /me endpoint is the source of truth for profile data.
       const token = jwt.sign({ sub: admin.id }, env.JWT_SECRET, {
-        expiresIn: '7d', 
+        expiresIn: env.JWT_EXPIRES_IN,
       } as SignOptions);
 
       res.json({
